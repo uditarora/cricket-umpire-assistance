@@ -9,6 +9,7 @@ mtx, dist = np.load('parameters_intrinsic.npy')
 # objp = np.array([[-11.43,71.1,0.0], [0.0,71.1,0.0], [11.43,71.1,0.0], [-132,0.0,0.0]], dtype=np.float64)
 
 imagep = np.array([(627, 360), (650, 360), (673, 360), (466, 498), (646,498)], dtype=np.float64)
+# objp = np.array([(-0.1143,0.711,0.0), (0.0,0.711,0.0), (0.1143,0.711,0.0), (-1.32,0.0,0.0), (0,0,0)], dtype=np.float64)
 objp = np.array([(-11.43,71.1,0.0), (0.0,71.1,0.0), (11.43,71.1,0.0), (-132,0.0,0.0), (0,0,0)], dtype=np.float64)
 
 imagep = np.resize(imagep, (4,1,2))
@@ -18,9 +19,14 @@ objp = np.resize(objp, (4,1,3))
 # print str(cv2.solvePnP(objp, imagep, mtx, dist))
 _, rvec, tvec = cv2.solvePnP(objp, imagep, mtx, dist)
 
+print str(tvec)
+print str(rvec)
+
 # Obtain camera pos
 rotM = cv2.Rodrigues(rvec)[0]
 print "rotM: "+str(rotM)
+print "\n"
+print "-rotM.T"+str(-np.matrix(rotM).T)
 cameraPosition = -np.matrix(rotM).T * np.matrix(tvec)
 
 # Rt = cv2.Rodrigues(rvec)[0]
@@ -38,7 +44,7 @@ print str(cameraPosition)
 # _, rvec, tvec, _ = cv2.solvePnPRansac(objp, imagep, mtx, dist)
 
 # # Obtain camera pos
-# rotM = cv2.Rodrigues(rvec)
+# rotM = cv2.Rodrigues(rvec)[0]
 # print "rotM: "+str(rotM)
 # cameraPosition = -np.matrix(rotM).T * np.matrix(tvec)
 
