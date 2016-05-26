@@ -19,6 +19,8 @@ imgpoints = [] # 2d points in image plane.
 images = glob.glob('board_images/*.jpg')
 count = 0
 
+images.sort()
+
 for fname in images:
     print "Reading image: "+str(fname)
     count += 1
@@ -30,16 +32,17 @@ for fname in images:
 
     # If found, add object points, image points (after refining them)
     if ret == True:
+        corners2 = cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
         objpoints.append(objp)
 
         cv2.cornerSubPix(gray,corners,(11,11),(-1,-1),criteria)
         imgpoints.append(corners)
 
         # Draw and display the corners
-        cv2.drawChessboardCorners(img, (GRID_X,GRID_Y), corners,ret)
+        cv2.drawChessboardCorners(img, (GRID_X,GRID_Y), corners2, ret)
         cv2.imshow('img',img)
         # cv2.imwrite(str(count)+'_.jpg',img)
-        cv2.waitKey(200)
+        cv2.waitKey(0)
 
 cv2.destroyAllWindows()
 
@@ -48,8 +51,8 @@ ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.sh
 print "ret: "+str(ret)
 print "mtx: "+str(mtx)
 print "dist: "+str(dist)
-print "rvecs: "+str(rvecs)
-print "tvecs: "+str(tvecs)
+# print "rvecs: "+str(rvecs)
+# print "tvecs: "+str(tvecs)
 
 np.save('parameters_intrinsic', (mtx, dist[0]))
 # mtx, dist = np.load('parameters_intrinsic.npy')   # To load from the saved parameters file
