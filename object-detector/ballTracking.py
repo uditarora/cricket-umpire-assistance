@@ -37,7 +37,7 @@ if bowling_attack:
     DURATION = 60
 
 def findRadius(frame, x, y, frame_no):
-    
+
     """Function to find radius of the detected ball"""
 
     # Parameters to find radius of the ball
@@ -246,7 +246,7 @@ quadraticReg = quadFit.quadraticRegression(Textlines)
 # Qutput to text file
 idx = 0
 for (x,y,radius,frame_no,is_bouncing_point) in Textlines:
-    Coordinates_file.write("{} {} {} {} {} {} {}\n".format(x, y, radius, frame_no, is_bouncing_point, linearReg[idx], quadraticReg[idx]))
+    Coordinates_file.write("{:.3f} {:.3f} {:.3f} {:.3f} {} {:.3f} {:.3f}\n".format(x, y, radius, frame_no, is_bouncing_point, linearReg[idx], quadraticReg[idx]))
     idx = idx + 1
 
 # Close coordinates text file
