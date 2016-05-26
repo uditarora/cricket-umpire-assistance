@@ -27,14 +27,14 @@ camera = cv2.VideoCapture(args["video"])
 bowling_attack = int(args["attack"])
 
 # Number of frames to skip after initial movement detected
-SKIP = 45
+SKIP = 65
 
 # Number of frames to detect after ball detection
 DURATION = 40
 
 # If bowling attack is spin then increase the number of frames 
 if bowling_attack:
-    DURATION = 60
+    DURATION = 80
 
 def findRadius(frame, x, y, frame_no):
 
@@ -73,7 +73,6 @@ def findRadius(frame, x, y, frame_no):
     if DEBUG_VISUALIZE:
        cv2.imshow("Best Fit Circle",frame)
     Textlines.append((x+centre_X, y+centre_Y, radius, frame_no,0))
-
 
 # Detecting the frame when bowler starts to bowl
 
@@ -167,7 +166,7 @@ while True:
 
 # Parameters for detector.py
 step_size = (3, 3)
-threshold = 0.01
+threshold = 0.7
   
 while True:
     """Windowing technique, search around the ball detected in previous frame"""
@@ -176,6 +175,10 @@ while True:
     frame_no += 1
     if not grabbed1:
         break
+
+    if frame_no > initial_frame + DURATION:
+        break 
+            
     # cv2.imshow("Current Grabbed Frame",frame1)
     last_frame = frame1
     gray_image_1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
@@ -218,15 +221,13 @@ while True:
     # Call find radius
     findRadius(img_ball, current_ballPos[0], current_ballPos[1], frame_no)
 
-    if frame_no > initial_frame + DURATION:
-        break 
-
 # Calculate the bouncing point and mark ball tracks
 bouncing_coordinates = (0,0)
 idx = 0
 bouncing_idx = 0
 for (x, y) in ball_detection:
-    cv2.rectangle(last_frame, (x+23, y+23), (x+27, y+27), (0, 0, 0), thickness=2)
+    if idx > 45:
+        cv2.rectangle(last_frame, (x+23, y+23), (x+27, y+27), (0, 0, 0), thickness=2)
     if y > bouncing_coordinates[1]:
         bouncing_coordinates = (x,y)
         bouncing_idx = idx
@@ -238,6 +239,7 @@ cv2.rectangle(last_frame, (bouncing_coordinates[0]+23, bouncing_coordinates[1]+2
 if DEBUG_VISUALIZE:
     cv2.imshow("Ball Path", last_frame)
     cv2.waitKey(0)
+
 
 # Regressions
 linearReg = linReg.linearRegression(Textlines)
