@@ -56,7 +56,7 @@ def find(im, step_size, threshold):
         if confidence > final[2]:
             final = (x_tl,y_tl,confidence,w,h)
     cv2.rectangle(im, (final[0], final[1]), (final[0]+50, final[1]+50), (0, 0, 0), thickness=2)
-    # cv2.imshow("Searching window", im)
-    # cv2.waitKey(1)
+    cv2.imshow("Searching window", im)
+    cv2.waitKey(1)
     
     return (final[0],final[1])

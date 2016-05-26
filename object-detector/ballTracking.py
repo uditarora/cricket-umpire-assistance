@@ -25,14 +25,14 @@ camera = cv2.VideoCapture(args["video"])
 bowling_attack = int(args["attack"])
 
 # Number of frames to skip after initial movement detected
-SKIP = 45
+SKIP = 65
 
 # Number of frames to detect after ball detection
 DURATION = 40
 
 # If bowling attack is spin then increase the number of frames 
 if bowling_attack:
-    DURATION = 60
+    DURATION = 80
 
 def findRadius(frame, x, y, frame_no):
 
@@ -68,7 +68,7 @@ def findRadius(frame, x, y, frame_no):
     # centre_X,centre_Y,radius = findAppropriateCircle(contours[circleIndex])
 	(centre_X,centre_Y),radius = cv2.minEnclosingCircle(contours[circleIndex])
 	cv2.circle(frame,(int(centre_X),int(centre_Y)), int(radius), (255,0,0), 2)
-	# cv2.imshow("Best Fit Circle",frame)
+	cv2.imshow("Best Fit Circle",frame)
 	Textlines.append((x+centre_X, y+centre_Y, radius, frame_no,0))
 
 
@@ -232,8 +232,8 @@ Textlines[bouncing_idx] = (Textlines[bouncing_idx][0], Textlines[bouncing_idx][1
 cv2.rectangle(last_frame, (bouncing_coordinates[0]+23, bouncing_coordinates[1]+23), (bouncing_coordinates[0]+27, bouncing_coordinates[1]+27), (0, 0, 255), thickness=2)
 
 # Show the final tracked path!!
-# cv2.imshow("Ball Path", last_frame)
-# cv2.waitKey(0)
+cv2.imshow("Ball Path", last_frame)
+cv2.waitKey(0)
 
 # Regressions
 linearReg = linReg.linearRegression(Textlines)
