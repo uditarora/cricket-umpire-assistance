@@ -27,7 +27,7 @@ camera = cv2.VideoCapture(args["video"])
 bowling_attack = int(args["attack"])
 
 # Number of frames to skip after initial movement detected
-SKIP = 65
+SKIP = 45
 
 # Number of frames to detect after ball detection
 DURATION = 40
@@ -226,8 +226,7 @@ bouncing_coordinates = (0,0)
 idx = 0
 bouncing_idx = 0
 for (x, y) in ball_detection:
-    if idx > 45:
-        cv2.rectangle(last_frame, (x+23, y+23), (x+27, y+27), (0, 0, 0), thickness=2)
+    cv2.rectangle(last_frame, (x+23, y+23), (x+27, y+27), (0, 0, 0), thickness=2)
     if y > bouncing_coordinates[1]:
         bouncing_coordinates = (x,y)
         bouncing_idx = idx
