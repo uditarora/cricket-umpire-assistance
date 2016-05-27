@@ -37,7 +37,7 @@ DURATION = 50
 
 # If bowling attack is spin then increase the number of frames 
 if bowling_attack:
-    DURATION = 70
+    DURATION = 80
 
 def findRadius(frame, x, y, frame_no):
 
@@ -182,6 +182,7 @@ while True:
 step_size = (3, 3)
 threshold = 0.2
 cv2.imshow("Balls First Frame",frame1)
+stop_search = 0
       
 while True:
     """
@@ -225,8 +226,12 @@ while True:
     
     # If not detected
     if(current_ballPos_temp[0] == 0 and current_ballPos_temp[1] == 0):
+        stop_search = stop_search + 1
+        if stop_search == 5:
+        	break
         continue
     
+    stop_search = 0
     # Get coordinates according to full frame
     current_ballPos = (x1 + current_ballPos_temp[0], y1 + current_ballPos_temp[1])
     
