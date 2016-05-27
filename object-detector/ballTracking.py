@@ -27,14 +27,14 @@ camera = cv2.VideoCapture(args["video"])
 bowling_attack = int(args["attack"])
 
 # Number of frames to skip after initial movement detected
-SKIP = 45
+SKIP = 65
 
 # Number of frames to detect after ball detection
 DURATION = 40
 
 # If bowling attack is spin then increase the number of frames 
 if bowling_attack:
-    DURATION = 80
+    DURATION = 70
 
 def findRadius(frame, x, y, frame_no):
 
@@ -166,7 +166,7 @@ while True:
 
 # Parameters for detector.py
 step_size = (3, 3)
-threshold = 0.7
+threshold = 0.5
   
 while True:
     """Windowing technique, search around the ball detected in previous frame"""
