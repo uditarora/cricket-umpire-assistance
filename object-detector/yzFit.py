@@ -16,12 +16,17 @@ PITCH_THICKNESS = 10
 CREASE_LENGTH = 122
 XWASTE = 405.4
 
+WICKET_HEIGHT = 71.1
+WICKET_WIDTH = 22.86
+STUMP_WIDTH = 4.5
+
 FY = 1120.0
 
 SCALE = [1, 0.5, PITCH_LENGTH - (2*CREASE_LENGTH)]
 
+with open('coordinates.txt') as coord_file:
 # with open('coordinates_slow2.txt') as coord_file:
-with open('coordinates_fast.txt') as coord_file:
+# with open('coordinates_fast2.txt') as coord_file:
     for i,row in enumerate(coord_file):
         x,y,r,frame_no,is_bouncing_pt,r_new,y_new= row.split()
         r_new = float(r_new)
@@ -48,22 +53,23 @@ for i,radius in enumerate(rlist):
 
 scene1 = display(title="Automated Cricket Umpiring - HawkEye", width=1280, height=720, range=10, background=(0.2,0.2,0.2), center=(0,30,30))
 # Draw pitch floor
-floor = box(pos=(0,0,0), size=(PITCH_LENGTH*1.2,PITCH_THICKNESS*1.2,PITCH_WIDTH), material=materials.unshaded, color=color.yellow)
-floor_outer = box(pos=(0,0,0), size=(PITCH_LENGTH*1.25,PITCH_THICKNESS,PITCH_WIDTH*2), material=materials.unshaded, color=color.green)
+floor = box(pos=(0,0,0), size=(PITCH_LENGTH*1.2,PITCH_THICKNESS*1.2,PITCH_WIDTH), material=materials.unshaded, color=(0.97,0.94,0.6))
+floor_outer = box(pos=(0,0,0), size=(PITCH_LENGTH*1.25,PITCH_THICKNESS,PITCH_WIDTH*2), material=materials.unshaded, color=(0.2,0.7,0.27))
+floor_impact = box(pos=(0,0,0), size=(PITCH_LENGTH,PITCH_THICKNESS*1.3,WICKET_WIDTH), material=materials.unshaded, color=(0.63,0.57,0.93), opacity=0.8)
 
 # Draw wickets and crease lines at batting side
-batting_wicket1 = box(pos=(PITCH_LENGTH/2,35.55,-8), size=(5,71.1,4), color=color.white)
-batting_wicket2 = box(pos=(PITCH_LENGTH/2,35.55,0), size=(5,71.1,4), color=color.white)
-batting_wicket3 = box(pos=(PITCH_LENGTH/2,35.55,8), size=(5,71.1,4), color=color.white)
+batting_wicket1 = box(pos=(PITCH_LENGTH/2,WICKET_HEIGHT/2,-(WICKET_WIDTH/2-STUMP_WIDTH/2)), size=(5,71.1,STUMP_WIDTH), color=color.white)
+batting_wicket2 = box(pos=(PITCH_LENGTH/2,WICKET_HEIGHT/2,0), size=(5,71.1,STUMP_WIDTH), color=color.white)
+batting_wicket3 = box(pos=(PITCH_LENGTH/2,WICKET_HEIGHT/2,(WICKET_WIDTH/2-STUMP_WIDTH/2)), size=(5,71.1,STUMP_WIDTH), color=color.white)
 line1 = box(pos=(PITCH_LENGTH/2,PITCH_THICKNESS/2,0), size=(10,5,264), color=color.white)
 line2 = box(pos=(PITCH_LENGTH/2,PITCH_THICKNESS/2,132), size=(244,5,10), color=color.white)
 line3 = box(pos=(PITCH_LENGTH/2,PITCH_THICKNESS/2,-132), size=(244,5,10), color=color.white)
 line4 = box(pos=(PITCH_LENGTH/2-122,PITCH_THICKNESS/2,0), size=(10,5,366), color=color.white)
 
 # Draw wickets at bowling side
-bowling_wicket1 = box(pos=(-PITCH_LENGTH/2,35.55,-8), size=(5,71.1,4), color=color.white)
-bowling_wicket2 = box(pos=(-PITCH_LENGTH/2,35.55,0), size=(5,71.1,4), color=color.white)
-bowling_wicket3 = box(pos=(-PITCH_LENGTH/2,35.55,8), size=(5,71.1,4), color=color.white)
+bowling_wicket1 = box(pos=(-PITCH_LENGTH/2,WICKET_HEIGHT/2,-(WICKET_WIDTH/2-STUMP_WIDTH/2)), size=(5,71.1,STUMP_WIDTH), color=color.white)
+bowling_wicket2 = box(pos=(-PITCH_LENGTH/2,WICKET_HEIGHT/2,0), size=(5,71.1,STUMP_WIDTH), color=color.white)
+bowling_wicket3 = box(pos=(-PITCH_LENGTH/2,WICKET_HEIGHT/2,(WICKET_WIDTH/2-STUMP_WIDTH/2)), size=(5,71.1,STUMP_WIDTH), color=color.white)
 line1 = box(pos=(-PITCH_LENGTH/2,PITCH_THICKNESS/2,0), size=(10,5,264), color=color.white)
 line2 = box(pos=(-PITCH_LENGTH/2,PITCH_THICKNESS/2,132), size=(244,5,10), color=color.white)
 line3 = box(pos=(-PITCH_LENGTH/2,PITCH_THICKNESS/2,-132), size=(244,5,10), color=color.white)
@@ -119,7 +125,7 @@ for i in range(1,len(xlist)):
     # Move ball0 to new position
     # balls[0].pos = balls[i].pos
 coords_3d.append((zlist[i-1]-((PITCH_LENGTH-2*CREASE_LENGTH)/2), yp, zp,1,bouncing_pt[i-1]))
-        
+
 # print "End y: {}\n".format(balls[-1].pos[1])
 quadraticReg = quadFit.quadraticRegression(coords_3d)
 linearReg = temp1.quadraticRegression(coords_3d)
@@ -132,15 +138,15 @@ for idx in range(1,i+1):
 
     # Draw ball at previous position
     if coords_3d[idx-1][0] > -400:
-      balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], linearReg[idx-1]), radius=6, color=color.red))
-      # balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], coords_3d[idx-1][2]), radius=6, color=color.blue))
+        balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], linearReg[idx-1]), radius=6, color=(0.52,0.15,0.19)))
+        # balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], coords_3d[idx-1][2]), radius=6, color=color.blue))
 for idx in range(i+1, len(coords_3d) + 1):
     # rate(2)
 
     # Draw ball at previous position
     if coords_3d[idx-1][0] > -400:
-      balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], linearReg[idx-1]), radius=6, color=color.blue))
-      # balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], coords_3d[idx-1][2]), radius=6, color=color.blue))
+        balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], linearReg[idx-1]), radius=6, color=color.blue))
+        # balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], coords_3d[idx-1][2]), radius=6, color=color.blue))
 
 
 

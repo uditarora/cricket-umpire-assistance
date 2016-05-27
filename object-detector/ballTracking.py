@@ -30,7 +30,7 @@ bowling_attack = int(args["attack"])
 SKIP = 45
 
 if bowling_attack:
-    SKIP = 55
+    SKIP = 65
 
 # Number of frames to detect after ball detection
 DURATION = 50
@@ -44,12 +44,12 @@ def findRadius(frame, x, y, frame_no):
     """Function to find radius of the detected ball"""
 
     # Parameters to find radius of the ball
-    THRESHOLD_brightness = 75
+    THRESHOLD_brightness = 90
     MAX_INTENSITY = 255
     MIN_INTENSITY = 0
-    START_RADIUS = 21.8 #151
-    FINISH_RADIUS = 7.2 #223
-    PITCH_DIST = 16
+    # START_RADIUS = 21.8 #151
+    # FINISH_RADIUS = 7.2 #223
+    # PITCH_DIST = 16
     blurredFrame = cv2.GaussianBlur(frame,(5,5),0)
     # cv2.imshow("Blurred Frame", blurredFrame)
 
@@ -96,7 +96,6 @@ while True:
     """
     # Grab a frame and take difference from prev frame
     (grabbed1, frame1) = camera.read()
-    cv2.imshow("Initial Frame",frame1)
     frame_no += 1
     if not grabbed1:
         break
@@ -259,6 +258,7 @@ cv2.rectangle(last_frame, (bouncing_coordinates[0]+23, bouncing_coordinates[1]+2
 # Show the final tracked path!!
 if DEBUG_VISUALIZE:
     cv2.imshow("Ball Path", last_frame)
+    cv2.imwrite("path.jpg", last_frame)
     cv2.waitKey(0)
 
 
@@ -269,7 +269,7 @@ quadraticReg = quadFit.quadraticRegression(Textlines)
 # Qutput to text file
 idx = 0
 for (x,y,radius,frame_no,is_bouncing_point) in Textlines:
-    Coordinates_file.write("{:.3f} {:.3f} {:.3f} {:.3f} {} {:.3f} {:.3f}\n".format(x, y, radius, frame_no, is_bouncing_point, linearReg[idx], quadraticReg[idx]))
+    Coordinates_file.write("{:.3f} {:.3f} {:.3f} {} {} {:.3f} {:.3f}\n".format(x, y, radius, frame_no, is_bouncing_point, linearReg[idx], quadraticReg[idx]))
     idx = idx + 1
 
 # Close coordinates text file
