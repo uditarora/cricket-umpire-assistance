@@ -29,6 +29,9 @@ bowling_attack = int(args["attack"])
 # Number of frames to skip after initial movement detected
 SKIP = 65
 
+if bowling_attack:
+    SKIP = 65
+
 # Number of frames to detect after ball detection
 DURATION = 40
 
@@ -41,7 +44,7 @@ def findRadius(frame, x, y, frame_no):
     """Function to find radius of the detected ball"""
 
     # Parameters to find radius of the ball
-    THRESHOLD_brightness = 75
+    THRESHOLD_brightness = 90
     MAX_INTENSITY = 255
     MIN_INTENSITY = 0
     START_RADIUS = 21.8 #151
@@ -133,7 +136,7 @@ x_end = 900
  
 # Parameters for detector.py
 step_size = (10, 10)
-threshold = 0.5
+threshold = 0.7
 
 # Array to store coordinates
 ball_detection = []

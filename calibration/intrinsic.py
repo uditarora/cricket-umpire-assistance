@@ -42,7 +42,7 @@ for fname in images:
         cv2.drawChessboardCorners(img, (GRID_X,GRID_Y), corners2, ret)
         cv2.imshow('img',img)
         # cv2.imwrite(str(count)+'_.jpg',img)
-        cv2.waitKey(0)
+        cv2.waitKey(100)
 
 cv2.destroyAllWindows()
 
