@@ -47,8 +47,8 @@ def quadraticRegression(data):
   z2 = np.polyfit(x2, y2, 2, None, False, w2, False)
   f2 = np.poly1d(z2)
   
-  for i in range(1,10):
-    x2.append(prev_x + i*30)
+  for i in range(1,300):
+    x2.append(prev_x + i*1)
     w2.append(1)
 
   # calculate new x's and y's
@@ -111,8 +111,8 @@ def quadraticRegression_afterBounce(data):
   z2 = np.polyfit(x2, y2, 2, None, False, w2, False)
   f2 = np.poly1d(z2)
   
-  for i in range(1,10):
-    x2.append(prev_x + i*30)
+  for i in range(1,300):
+    x2.append(prev_x + i*1)
     w2.append(1)
 
   # calculate new x's and y's

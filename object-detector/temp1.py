@@ -48,8 +48,8 @@ def quadraticRegression(data):
   f2 = np.poly1d(z2)
 
 
-  for i in range(1,10):
-    x2.append(prev_x + i*30)
+  for i in range(1,300):
+    x2.append(prev_x + i*1)
     w2.append(1)
 
 
