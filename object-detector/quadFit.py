@@ -15,7 +15,9 @@ def quadraticRegression(data):
 
   changing_point = 0
   i = 0
+  prev_x = 0
   for(x,y,_,_,bounce_point) in data:
+    prev_x = x
     if bounce_point:
       changing_point = 1
       w1[i-1] = 5
@@ -40,10 +42,15 @@ def quadraticRegression(data):
   x_new1 = x1
   y_new1 = f1(x_new1)
 
+
   # calculate polynomial
   z2 = np.polyfit(x2, y2, 2, None, False, w2, False)
   f2 = np.poly1d(z2)
   
+  for i in range(1,10):
+    x2.append(prev_x + i*30)
+    w2.append(1)
+
   # calculate new x's and y's
   x_new2 = x2
   y_new2 = f2(x_new2)

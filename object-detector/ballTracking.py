@@ -30,7 +30,7 @@ bowling_attack = int(args["attack"])
 SKIP = 45
 
 if bowling_attack:
-    SKIP = 65
+    SKIP = 55
 
 # Number of frames to detect after ball detection
 DURATION = 50
@@ -161,7 +161,6 @@ while True:
 
     # Grab frames one by one, modify it and send it to detector.py
     (grabbed1, frame1) = camera.read()
-    # cv2.imshow("Balls First Frame",frame1)
     gray_image_1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
     crop_img = gray_image_1[y_start: y_end, x_start: x_end]
     current_ballPos_temp = (0,0)
@@ -182,7 +181,8 @@ while True:
 # Parameters for detector.py
 step_size = (3, 3)
 threshold = 0.2
-  
+cv2.imshow("Balls First Frame",frame1)
+      
 while True:
     """
         Windowing technique, search around the ball detected in previous frame

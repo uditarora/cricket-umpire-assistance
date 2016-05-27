@@ -21,7 +21,7 @@ FY = 1120.0
 SCALE = [1, 0.5, PITCH_LENGTH - (2*CREASE_LENGTH)]
 
 # with open('coordinates_slow2.txt') as coord_file:
-with open('coordinates.txt') as coord_file:
+with open('coordinates_fast.txt') as coord_file:
     for i,row in enumerate(coord_file):
         x,y,r,frame_no,is_bouncing_pt,r_new,y_new= row.split()
         r_new = float(r_new)
@@ -38,13 +38,12 @@ with open('coordinates.txt') as coord_file:
 
 # Manually define start and end position radii
 START_RADIUS = 16
-END_RADIUS = 3.5
+END_RADIUS = 3.0
 
 for i,radius in enumerate(rlist):   
     z = (START_RADIUS-radius)/(START_RADIUS-END_RADIUS)
     zlist.append(z*SCALE[2])
-    # zlist.append(((-162)*radius) + 1590)
-
+    
 # textFile = open("3d_debug.txt", "w")
 
 scene1 = display(title="Automated Cricket Umpiring - HawkEye", width=1280, height=720, range=10, background=(0.2,0.2,0.2), center=(0,30,30))
@@ -71,7 +70,7 @@ line3 = box(pos=(-PITCH_LENGTH/2,PITCH_THICKNESS/2,-132), size=(244,5,10), color
 line4 = box(pos=(-PITCH_LENGTH/2+122,PITCH_THICKNESS/2,0), size=(10,5,366), color=color.white)
 
 balls = []
-FX = 300
+FX = 250
 # Display balls with trail
 yp = ylist[0]*FY/(FY+zlist[0])
 # yp = ylist[0] - ((z-700)/5)
@@ -124,11 +123,25 @@ coords_3d.append((zlist[i-1]-((PITCH_LENGTH-2*CREASE_LENGTH)/2), yp, zp,1,bounci
 # print "End y: {}\n".format(balls[-1].pos[1])
 quadraticReg = quadFit.quadraticRegression(coords_3d)
 linearReg = temp1.quadraticRegression(coords_3d)
+for idx in range(1,10):
+    coords_3d.append(((coords_3d[i-1][0] + idx*30),0,0,0,0))
+
 # y_correction = quadraticReg[y_correction - 1]
-for i in range(1,len(coords_3d)+1):
+for idx in range(1,i+1):
     # rate(2)
 
     # Draw ball at previous position
-    if coords_3d[i-1][0] > -400:
-      balls.append(sphere(pos=(coords_3d[i-1][0],quadraticReg[i-1], linearReg[i-1]), radius=6, color=color.red))
+    if coords_3d[idx-1][0] > -400:
+      balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], linearReg[idx-1]), radius=6, color=color.red))
+      # balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], coords_3d[idx-1][2]), radius=6, color=color.blue))
+for idx in range(i+1, len(coords_3d) + 1):
+    # rate(2)
+
+    # Draw ball at previous position
+    if coords_3d[idx-1][0] > -400:
+      balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], linearReg[idx-1]), radius=6, color=color.blue))
+      # balls.append(sphere(pos=(coords_3d[idx-1][0],quadraticReg[idx-1], coords_3d[idx-1][2]), radius=6, color=color.blue))
+
+
+
 coord_file.close()
