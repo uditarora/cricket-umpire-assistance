@@ -27,13 +27,13 @@ camera = cv2.VideoCapture(args["video"])
 bowling_attack = int(args["attack"])
 
 # Number of frames to skip after initial movement detected
-SKIP = 65
+SKIP = 45
 
 if bowling_attack:
     SKIP = 65
 
 # Number of frames to detect after ball detection
-DURATION = 40
+DURATION = 50
 
 # If bowling attack is spin then increase the number of frames 
 if bowling_attack:
@@ -44,7 +44,7 @@ def findRadius(frame, x, y, frame_no):
     """Function to find radius of the detected ball"""
 
     # Parameters to find radius of the ball
-    THRESHOLD_brightness = 90
+    THRESHOLD_brightness = 75
     MAX_INTENSITY = 255
     MIN_INTENSITY = 0
     START_RADIUS = 21.8 #151
@@ -86,14 +86,17 @@ initial_frame = 0
 # Rectangular Coordinates for lower half of the image
 y_start = 360
 y_end = 720
-x_start = 100
-x_end = 900 
+x_start = 0
+x_end = 1080 
     
 (grabbed1, prev) = camera.read()
 while True:
-    
+    """
+        Captures the frame in which bowler starts to bowl
+    """
     # Grab a frame and take difference from prev frame
     (grabbed1, frame1) = camera.read()
+    cv2.imshow("Initial Frame",frame1)
     frame_no += 1
     if not grabbed1:
         break
@@ -111,11 +114,13 @@ while True:
 
     # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
     # Skip above mentioned number of frames
-    white_percentage = 0.03
+    white_percentage = 0.02
     lower_height = 360
-    lower_width = 800
+    lower_width = 1080
 
     if white > (white_percentage * lower_width * lower_height):
+        cv2.imshow("Bowlers Frame",frame1)
+    
         # Skip frames
         for i in range(0,SKIP):
             (grabbed1, frame1) = camera.read()
@@ -124,6 +129,11 @@ while True:
         frame_no = frame_no + SKIP
         break
 
+# for i in range(0,142):
+#     (grabbed1, frame1) = camera.read()
+
+# initial_frame = 142
+# frame_no = 142
 
 # Ball detection
 # Find coordinates of the ball for the first time
@@ -145,7 +155,9 @@ ball_detection = []
 current_ballPos = (0,0)
             
 while True:
-    """Loop until ball gets detected"""
+    """
+        Loop until ball gets detected
+    """
 
     # Grab frames one by one, modify it and send it to detector.py
     (grabbed1, frame1) = camera.read()
@@ -169,10 +181,12 @@ while True:
 
 # Parameters for detector.py
 step_size = (3, 3)
-threshold = 0.5
+threshold = 0.2
   
 while True:
-    """Windowing technique, search around the ball detected in previous frame"""
+    """
+        Windowing technique, search around the ball detected in previous frame
+    """
 
     (grabbed1, frame1) = camera.read()
     frame_no += 1
