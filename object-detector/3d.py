@@ -44,10 +44,10 @@ SCALE = [1, 0.5, PITCH_LENGTH - (2*CREASE_LENGTH)]
 bouncing_pt_idx = -1
 
 # Find world coordinates
-with open('coordinates_wideright.txt') as coord_file:
-# with open('coordinates_bouncer.txt') as coord_file:
-# with open('coordinates_171638.txt') as coord_file:
-# with open('coordinates_171124.txt') as coord_file:
+# with open('coordinates_wideright.txt') as coord_file:
+with open('coordinates_bouncer.txt') as coord_file:
+# with open('coordinates_171638.txt') as coord_file:  # LBW
+# with open('coordinates_171124.txt') as coord_file:    # Spin
 # with open('coordinates_slow2.txt') as coord_file:   # Spin
 # with open('coordinates_171619.txt') as coord_file:    # Fast ball
     for i,row in enumerate(coord_file):
@@ -225,12 +225,12 @@ def get_nearest_ball_params(near_crease=False):
     if near_crease:
         dist = PITCH_LENGTH/2-122
 
-    for i in range(len(coords_3d)):
-        diff = abs(dist-coords_3d[i][0])
+    for i in range(len(final_coords_3d)):
+        diff = abs(dist-final_coords_3d[i][0])
         if diff < min_diff:
             min_diff = diff
             near_wicket_idx = i
-        if dist-coords_3d[i][0] < 0 and before_wicket_idx == num_detected_points-1:
+        if dist-final_coords_3d[i][0] < 0 and before_wicket_idx == num_detected_points-1:
             before_wicket_idx = i-1
     return near_wicket_idx, min_diff, before_wicket_idx
 
@@ -251,12 +251,12 @@ def get_nearest_ball_coords(idx, min_diff, before_wicket_idx, near_crease=False)
         return y, z
     else:
         # Find coordinates of ball at wicket using linear approximation
-        y2 = quadraticReg[before_wicket_idx+1]
-        y1 = quadraticReg[before_wicket_idx]
-        z2 = linearReg[before_wicket_idx+1]
-        z1 = linearReg[before_wicket_idx]
-        x2 = coords_3d[before_wicket_idx+1][0]
-        x1 = coords_3d[before_wicket_idx][0]
+        y2 = final_coords_3d[before_wicket_idx+1][1]
+        y1 = final_coords_3d[before_wicket_idx][1]
+        z2 = final_coords_3d[before_wicket_idx+1][2]
+        z1 = final_coords_3d[before_wicket_idx][2]
+        x2 = final_coords_3d[before_wicket_idx+1][0]
+        x1 = final_coords_3d[before_wicket_idx][0]
 
         slopey = (y2-y1)/(x2-x1)
         slopez = (z2-z1)/(x2-x1)
@@ -278,16 +278,27 @@ def check_lbw():
 
     # If bouncing point found, check if the bounce is in the impact zone or on off side (only right hand batting)
     # Bounce found and in impace zone
-    if bouncing_pt_idx != -1 and coords_3d[bouncing_pt_idx][2] <= WICKET_WIDTH/2:
-        if coords_3d[bouncing_pt_idx][2] >= -WICKET_WIDTH/2:
+    if bouncing_pt_idx != -1 and final_coords_3d[bouncing_pt_idx][2] <= WICKET_WIDTH/2:
+        if final_coords_3d[bouncing_pt_idx][2] >= -WICKET_WIDTH/2:
             print "PITCHING: INSIDE IMACT ZONE"
         else:
             print "PITCHING: OUTSIDE OFF"
-        return check_nearest_coord(near_wicket_idx, min_diff, before_wicket_idx)
+        # Check if last point in impact zone
+        if final_coords_3d[num_detected_points-1][2] >= -(WICKET_WIDTH/2+BALL_RADIUS) and final_coords_3d[num_detected_points-1][2] <= (WICKET_WIDTH/2+BALL_RADIUS):
+            print "IMPACT: IN-LINE"
+            return check_nearest_coord(near_wicket_idx, min_diff, before_wicket_idx)
+        else:
+            print "IMPACT: OUTSIDE"
+            return False
     # No bounce point found
     elif bouncing_pt_idx == -1:
         print "PITCHING: NO BOUNCE"
-        return check_nearest_coord(near_wicket_idx, min_diff, before_wicket_idx)
+        if final_coords_3d[num_detected_points-1][2] >= -(WICKET_WIDTH/2+BALL_RADIUS) and final_coords_3d[num_detected_points-1][2] <= (WICKET_WIDTH/2+BALL_RADIUS):
+            print "IMPACT: IN-LINE"
+            return check_nearest_coord(near_wicket_idx, min_diff, before_wicket_idx)
+        else:
+            print "IMPACT: OUTSIDE"
+            return False
     # Bounce out of impact zone
     else:
         print "PITCHING: OUTSIDE LEG"
@@ -307,10 +318,10 @@ def check_nearest_coord(idx, min_diff, before_wicket_idx):
 
 if check_lbw():
     print "WICKETS: HITTING"
-    print "LBW DECISION: OUT"
+    print "\nLBW DECISION: OUT"
 else:
     print "WICKETS: NOT HITTING"
-    print "LBW DECISION: NOT-OUT"
+    print "\nLBW DECISION: NOT-OUT"
 
 # Check Wide Decision
 def check_wide():
@@ -323,7 +334,7 @@ def check_wide():
 
 
     # Wide debug displays
-    # box(pos=(coords_3d[before_wicket_idx][0],y/2,z), size=(10,y,5))
+    # box(pos=(final_coords_3d[before_wicket_idx][0],y/2,z), size=(10,y,5))
     # print "Y: {}, Z: {}".format(y,z)
 
     if z <= -(WIDE_WIDTH/2-LINE_WIDTH-BALL_RADIUS) or z >= (WICKET_WIDTH+BALL_RADIUS):
