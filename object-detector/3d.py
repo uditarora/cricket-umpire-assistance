@@ -19,7 +19,6 @@ END_RADIUS = 0.0
 START_RADIUS = 16
 # END_RADIUS = 4.5
 # WICKET_RADIUS = 4
-
 END_RADIUS = 3.5
 WICKET_RADIUS = 3.2
 
@@ -50,8 +49,10 @@ bouncing_pt_idx = -1
 
 # Find world coordinates
 # with open('coordinates_wideright.txt') as coord_file:   # Wide right
-# with open('coordinates_bouncer.txt') as coord_file:   # Bouncer
-with open('coordinates_171638.txt') as coord_file:  # LBW
+with open('coordinates_171602.txt') as coord_file:   # Bouncer
+    END_RADIUS = 4.5
+    WICKET_RADIUS = 4
+# with open('coordinates_171638.txt') as coord_file:  # LBW
 # with open('coordinates_171124.txt') as coord_file:    # Spin
 # with open('coordinates_slow2.txt') as coord_file:   # Spin
 # with open('coordinates_171619.txt') as coord_file:    # Fast ball
@@ -91,7 +92,7 @@ def getBatsmanHeight():
     height = yavg*FY/(FY + (PITCH_LENGTH/2-122))
     # print "Yavg after perspective: "+str(height)
 
-    return height*2*0.8
+    return height*2*0.75
 
 BATSMAN_HEIGHT = getBatsmanHeight()
 print "Batsman's height: "+str(BATSMAN_HEIGHT)
@@ -381,10 +382,13 @@ def check_wide():
     near_wicket_idx, min_diff, before_wicket_idx = get_nearest_ball_params(near_crease=True)
     y, z = get_nearest_ball_coords(near_wicket_idx, min_diff, before_wicket_idx, near_crease=True)
 
-
     # Wide debug displays
     # box(pos=(final_coords_3d[before_wicket_idx][0],y/2,z), size=(10,y,5))
     # print "Y: {}, Z: {}".format(y,z)
+
+    # If ball is above player's head, return True
+    if y >= BATSMAN_HEIGHT:
+        return True
 
     if z <= -(WIDE_WIDTH/2-LINE_WIDTH-BALL_RADIUS) or z >= (WICKET_WIDTH+BALL_RADIUS):
         decision['wide'] = "WIDE"
@@ -398,6 +402,7 @@ if check_wide():
 else:
     print "\nWIDE DECISION: NOT WIDE"
 
+# Check Bouncer Decision
 def check_bouncer():
     """
         Checks if the ball delivery would result in bouncer
@@ -406,16 +411,59 @@ def check_bouncer():
     near_wicket_idx, min_diff, before_wicket_idx = get_nearest_ball_params(near_crease=True)
     y, z = get_nearest_ball_coords(near_wicket_idx, min_diff, before_wicket_idx, near_crease=True)
 
+    # Debug displays
+    # box(pos=(final_coords_3d[before_wicket_idx][0],y/2,z), size=(10,y,5))
+    # print "Y: {}, Z: {}".format(y,z)
 
-decision['noball'] = "NOT A NO-BALL"
-decision['bouncer'] = "NOT A BOUNCER"
+    # If no bounce point detected, return False
+    if bouncing_pt_idx == -1:
+        return False
 
+    if (y > BATSMAN_HEIGHT*0.92):
+        return True
+    else:
+        return False
+
+if check_bouncer():
+    decision['bouncer'] = "BOUNCER"
+    print "\nBOUNCER DECISION: BOUNCER"
+else:
+    decision['bouncer'] = "NOT A BOUNCER"
+    print "\nBOUNCER DECISION: NOT A BOUNCER"
+
+
+# Check No Ball Decision
+def check_noball():
+    """
+        Checks if the ball delivery would result in a no-ball
+    """
+    # Get y,z coordinates of the ball closest to crease
+    near_wicket_idx, min_diff, before_wicket_idx = get_nearest_ball_params(near_crease=True)
+    y, z = get_nearest_ball_coords(near_wicket_idx, min_diff, before_wicket_idx, near_crease=True)
+
+    # If bounce point detected, return False
+    if bouncing_pt_idx == 1:
+        return False
+
+    if (y >= BATSMAN_HEIGHT*0.62):
+        return True
+    else:
+        return False
+
+if check_noball():
+    decision['noball'] = "NO BALL"
+    print "\nNO BALL DECISION: NO BALL"
+else:
+    decision['noball'] = "NOT A NO BALL"
+    print "\nNO BALL DECISION: NOT A NO BALL"
+
+# Add decision headings to adjust text length
 decision['lbwheading'] = "LBW DECISION"
 decision['wicketsheading'] = "WICKETS"
 decision['impactheading'] = "IMPACT"
 decision['pitchingheading'] = "PITCHING"
 decision['wideheading'] = "WIDE DECISION"
-decision['noballheading'] = "NO-BALL DECISION"
+decision['noballheading'] = "NO BALL DECISION"
 decision['bouncerheading'] = "BOUNCER DECISION"
 
 # Pad text with spaces on both sides to make it the same size
@@ -439,23 +487,23 @@ TEXT_SIZE = 12
 TEXT_FONT = 'sans'
 
 # Draw Decision Labels on screen
-display1 = label(pos=(PITCH_LENGTH*1.5/2,700,-1000), text=decision['lbwheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display2 = label(pos=(PITCH_LENGTH*1.5/2,600,-1000), text=decision['lbw'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display1 = label(pos=(-PITCH_LENGTH*1.5/2,700,-1000), text=decision['lbwheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display2 = label(pos=(-PITCH_LENGTH*1.5/2,600,-1000), text=decision['lbw'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display3 = label(pos=(PITCH_LENGTH*1.5/2,450,-1000), text=decision['wicketsheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display4 = label(pos=(PITCH_LENGTH*1.5/2,350,-1000), text=decision['wickets'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display3 = label(pos=(-PITCH_LENGTH*1.5/2,450,-1000), text=decision['wicketsheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display4 = label(pos=(-PITCH_LENGTH*1.5/2,350,-1000), text=decision['wickets'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display5 = label(pos=(PITCH_LENGTH*1.5/2,200,-1000), text=decision['impactheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display6 = label(pos=(PITCH_LENGTH*1.5/2,100,-1000), text=decision['impact'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display5 = label(pos=(-PITCH_LENGTH*1.5/2,200,-1000), text=decision['impactheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display6 = label(pos=(-PITCH_LENGTH*1.5/2,100,-1000), text=decision['impact'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display7 = label(pos=(PITCH_LENGTH*1.5/2,-50,-1000), text=decision['pitchingheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display8 = label(pos=(PITCH_LENGTH*1.5/2,-150,-1000), text=decision['pitching'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display7 = label(pos=(-PITCH_LENGTH*1.5/2,-50,-1000), text=decision['pitchingheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display8 = label(pos=(-PITCH_LENGTH*1.5/2,-150,-1000), text=decision['pitching'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display9 = label(pos=(PITCH_LENGTH*1.5/2,700,1000), text=decision['wideheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display10 = label(pos=(PITCH_LENGTH*1.5/2,600,1000), text=decision['wide'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display9 = label(pos=(-PITCH_LENGTH*1.5/2,700,1000), text=decision['wideheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display10 = label(pos=(-PITCH_LENGTH*1.5/2,600,1000), text=decision['wide'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display11 = label(pos=(PITCH_LENGTH*1.5/2,450,1000), text=decision['noballheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display12 = label(pos=(PITCH_LENGTH*1.5/2,350,1000), text=decision['noball'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display11 = label(pos=(-PITCH_LENGTH*1.5/2,450,1000), text=decision['noballheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display12 = label(pos=(-PITCH_LENGTH*1.5/2,350,1000), text=decision['noball'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display13 = label(pos=(PITCH_LENGTH*1.5/2,200,1000), text=decision['bouncerheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display14 = label(pos=(PITCH_LENGTH*1.5/2,100,1000), text=decision['bouncer'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display13 = label(pos=(-PITCH_LENGTH*1.5/2,200,1000), text=decision['bouncerheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display14 = label(pos=(-PITCH_LENGTH*1.5/2,100,1000), text=decision['bouncer'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
