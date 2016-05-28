@@ -85,56 +85,56 @@ def findRadius(frame, x, y, frame_no):
 frame_no = 1
 initial_frame = 0
 
-# # Rectangular Coordinates for lower half of the image
-# y_start = 360
-# y_end = 720
-# x_start = 0
-# x_end = 1080 
+# Rectangular Coordinates for lower half of the image
+y_start = 360
+y_end = 720
+x_start = 0
+x_end = 1080 
     
-# (grabbed1, prev) = camera.read()
-# while True:
-#     """
-#         Captures the frame in which bowler starts to bowl
-#     """
-#     # Grab a frame and take difference from prev frame
-#     (grabbed1, frame1) = camera.read()
-#     frame_no += 1
-#     if not grabbed1:
-#         break
-
-#     gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
-#     gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-#     final1 = gray1[y_start: y_end, x_start: x_end]
-#     final2 = gray2[y_start: y_end, x_start: x_end]
-#     difference = cv2.absdiff(final1, final2)
-#     retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
-#     prev = frame1
-    
-#     # Count number of white difference pixels 
-#     white = cv2.countNonZero(threshold)
-
-#     # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
-#     # Skip above mentioned number of frames
-#     white_percentage = 0.02
-#     lower_height = 360
-#     lower_width = 1080
-
-#     if white > (white_percentage * lower_width * lower_height):
-#         cv2.imshow("Bowlers Frame",frame1)
-    
-#         # Skip frames
-#         for i in range(0,SKIP):
-#             (grabbed1, frame1) = camera.read()
-
-#         initial_frame = frame_no + SKIP
-#         frame_no = frame_no + SKIP
-#         break
-
-for i in range(0,1):
+(grabbed1, prev) = camera.read()
+while True:
+    """
+        Captures the frame in which bowler starts to bowl
+    """
+    # Grab a frame and take difference from prev frame
     (grabbed1, frame1) = camera.read()
+    frame_no += 1
+    if not grabbed1:
+        break
 
-initial_frame = 1
-frame_no = 1
+    gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+    final1 = gray1[y_start: y_end, x_start: x_end]
+    final2 = gray2[y_start: y_end, x_start: x_end]
+    difference = cv2.absdiff(final1, final2)
+    retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
+    prev = frame1
+    
+    # Count number of white difference pixels 
+    white = cv2.countNonZero(threshold)
+
+    # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
+    # Skip above mentioned number of frames
+    white_percentage = 0.02
+    lower_height = 360
+    lower_width = 1080
+
+    if white > (white_percentage * lower_width * lower_height):
+        cv2.imshow("Bowlers Frame",frame1)
+    
+        # Skip frames
+        for i in range(0,SKIP):
+            (grabbed1, frame1) = camera.read()
+
+        initial_frame = frame_no + SKIP
+        frame_no = frame_no + SKIP
+        break
+
+# for i in range(0,1):
+#     (grabbed1, frame1) = camera.read()
+
+# initial_frame = 1
+# frame_no = 1
 
 # Ball detection
 # Find coordinates of the ball for the first time
@@ -251,14 +251,19 @@ idx = 0
 bouncing_idx = 0
 last_frame1 = last_frame.copy()
 for (x, y) in ball_detection:
-    if idx > 51:
-        cv2.rectangle(last_frame, (x+23, y+23), (x+27, y+27), (0, 0, 0), thickness=2)
+    cv2.rectangle(last_frame, (x+23, y+23), (x+27, y+27), (0, 0, 0), thickness=2)
     if y > bouncing_coordinates[1]:
         bouncing_coordinates = (x,y)
         bouncing_idx = idx
     idx = idx + 1
 Textlines[bouncing_idx] = (Textlines[bouncing_idx][0], Textlines[bouncing_idx][1], Textlines[bouncing_idx][2], Textlines[bouncing_idx][3], 1)
 cv2.rectangle(last_frame, (bouncing_coordinates[0]+23, bouncing_coordinates[1]+23), (bouncing_coordinates[0]+27, bouncing_coordinates[1]+27), (0, 0, 255), thickness=2)
+
+idx = 0
+for (x, y) in ball_detection:
+    if idx < bouncing_idx:
+        cv2.rectangle(last_frame, (x+23, y+23), (x+27, y+27), (0, 0, 0), thickness=2)
+    idx = idx + 1    
 
 
 
@@ -272,7 +277,7 @@ if(len(ball_detection) >= bouncing_idx + 2):
     prev_slope = (prev_coord[1] - (ball_detection[bouncing_idx][1]+ 25) )/(prev_coord[0] - (25+ball_detection[bouncing_idx][0])) 
     for i in range((bouncing_idx+2), len(ball_detection)):
         current_coord = (ball_detection[i][0]+25,ball_detection[i][1]+25,Textlines[i][2], Textlines[i][3], Textlines[i][4])
-        print current_coord
+        # print current_coord
         if (current_coord[0] - prev_coord[0]) == 0:
             slope = 100000
         else:
@@ -280,13 +285,12 @@ if(len(ball_detection) >= bouncing_idx + 2):
         tn = (slope-prev_slope)/(1.0+(slope*prev_slope))
         angle = math.atan(tn)*180.0/math.pi*(-1)
         distance = ((current_coord[1] - prev_coord[1])*(current_coord[1] - prev_coord[1])) + ((current_coord[0] - prev_coord[0])*(current_coord[0] - prev_coord[0]))
-        print angle
-        print distance
+        # print angle
+        # print distance
         # print "x1 " + str(current_coord[0]) + "y1 " + str(current_coord[1]) + "x2 " + str(prev_coord[0]) + "y2 " + str(prev_coord[1]) + "dist" + str(distance)
         if angle < 0:
             angle = angle* (-1)
         if angle <= 15 or distance <= 400:
-            print "asd"
             corrected.append(current_coord)  
             prev_coord = current_coord
             prev_slope = slope  
@@ -307,13 +311,12 @@ if(len(ball_detection) >= bouncing_idx + 2):
 i = 0
 for (x,y,_,_,_) in corrected:
     if i > bouncing_idx:
-        cv2.rectangle(last_frame1, (x-2, y-2), (x+2, y+2), (0, 255, 0), thickness=2)
+        cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 255, 0), thickness=2)
     i = i + 1    
 
 # Show the final tracked path!!
 if DEBUG_VISUALIZE:
     cv2.imshow("Ball Path", last_frame)
-    cv2.imshow("Ball Path1", last_frame1)
     cv2.imwrite("path.jpg", last_frame)
     cv2.waitKey(0)
 
