@@ -67,6 +67,9 @@ def findRadius(frame, x, y, frame_no):
     cv2.drawContours(blurredFrame, contours, -1, (255,0,0), 1)
     # cv2.imshow("Contours", blurredFrame)
 
+    if len(contours) == 0:
+        return False
+
     circleIndex = 0
     for i,j in enumerate(contours):
         if(len(j)>len(contours[circleIndex])):
@@ -79,6 +82,8 @@ def findRadius(frame, x, y, frame_no):
        cv2.imshow("Best Fit Circle",frame)
     Textlines.append((x+centre_X, y+centre_Y, radius, frame_no,0))
 
+    return True
+
 # Detecting the frame when bowler starts to bowl
 
 #Initialization
@@ -86,55 +91,55 @@ frame_no = 1
 initial_frame = 0
 
 # Rectangular Coordinates for lower half of the image
-y_start = 360
-y_end = 720
-x_start = 0
-x_end = 1080 
+# y_start = 360
+# y_end = 720
+# x_start = 0
+# x_end = 1080 
     
-(grabbed1, prev) = camera.read()
-while True:
-    """
-        Captures the frame in which bowler starts to bowl
-    """
-    # Grab a frame and take difference from prev frame
-    (grabbed1, frame1) = camera.read()
-    frame_no += 1
-    if not grabbed1:
-        break
-
-    gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
-    gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-    final1 = gray1[y_start: y_end, x_start: x_end]
-    final2 = gray2[y_start: y_end, x_start: x_end]
-    difference = cv2.absdiff(final1, final2)
-    retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
-    prev = frame1
-    
-    # Count number of white difference pixels 
-    white = cv2.countNonZero(threshold)
-
-    # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
-    # Skip above mentioned number of frames
-    white_percentage = 0.02
-    lower_height = 360
-    lower_width = 1080
-
-    if white > (white_percentage * lower_width * lower_height):
-        cv2.imshow("Bowlers Frame",frame1)
-    
-        # Skip frames
-        for i in range(0,SKIP):
-            (grabbed1, frame1) = camera.read()
-
-        initial_frame = frame_no + SKIP
-        frame_no = frame_no + SKIP
-        break
-
-# for i in range(0,1):
+# (grabbed1, prev) = camera.read()
+# while True:
+#     """
+#         Captures the frame in which bowler starts to bowl
+#     """
+#     # Grab a frame and take difference from prev frame
 #     (grabbed1, frame1) = camera.read()
+#     frame_no += 1
+#     if not grabbed1:
+#         break
 
-# initial_frame = 1
-# frame_no = 1
+#     gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
+#     gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+#     final1 = gray1[y_start: y_end, x_start: x_end]
+#     final2 = gray2[y_start: y_end, x_start: x_end]
+#     difference = cv2.absdiff(final1, final2)
+#     retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
+#     prev = frame1
+    
+#     # Count number of white difference pixels 
+#     white = cv2.countNonZero(threshold)
+
+#     # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
+#     # Skip above mentioned number of frames
+#     white_percentage = 0.02
+#     lower_height = 360
+#     lower_width = 1080
+
+#     if white > (white_percentage * lower_width * lower_height):
+#         cv2.imshow("Bowlers Frame",frame1)
+    
+#         # Skip frames
+#         for i in range(0,SKIP):
+#             (grabbed1, frame1) = camera.read()
+
+#         initial_frame = frame_no + SKIP
+#         frame_no = frame_no + SKIP
+#         break
+
+for i in range(0,1):
+    (grabbed1, frame1) = camera.read()
+
+initial_frame = 1
+frame_no = 1
 
 # Ball detection
 # Find coordinates of the ball for the first time
@@ -239,10 +244,11 @@ while True:
     # Crop the ball image
     img_ball = img_copy[current_ballPos[1]: current_ballPos[1] + 50, current_ballPos[0]: current_ballPos[0] + 50]
     
-    ball_detection.append(current_ballPos)
-    
     # Call find radius
-    findRadius(img_ball, current_ballPos[0], current_ballPos[1], frame_no)
+    found = findRadius(img_ball, current_ballPos[0], current_ballPos[1], frame_no)
+
+    if found:
+        ball_detection.append(current_ballPos)
 
 
 # Calculate the bouncing point and mark ball tracks

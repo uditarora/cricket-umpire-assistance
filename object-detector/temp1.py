@@ -20,7 +20,8 @@ def quadraticRegression(data):
     prev_x = x
     if bounce_point:
       changing_point = 1
-      w1[i-1] = 5
+      if i > 0:
+        w1[i-1] = 5
 
     if changing_point == 0:        
       w1.append(weights1)
@@ -35,19 +36,29 @@ def quadraticRegression(data):
     i = i + 1  
 
 
-  # calculate polynomial
-  z1 = np.polyfit(x1, y1, 1, None, False, w1, False)
-  f1 = np.poly1d(z1)
-  
-  # calculate new x's and y's
-  x_new1 = x1
-  # y_new1 = f1(x_new1)
-  y_new1 = y1
-  # calculate polynomial
-  z2 = np.polyfit(x2, y2, 1, None, False, w2, False)
-  f2 = np.poly1d(z2)
+  x_new1 = []
+  y_new1 = []
+  x_new2 = []
+  y_new2 = []
+
+  # calculate polynomial before bounce
+  if len(x1) > 0:
+    z1 = np.polyfit(x1, y1, 1, None, False, w1, False)
+    f1 = np.poly1d(z1)
+    
+    # calculate new x's and y's
+    x_new1 = x1
+    # y_new1 = f1(x_new1)
+    y_new1 = y1
 
 
+  # calculate polynomial after bounce
+  if len(x2) > 0:
+    z2 = np.polyfit(x2, y2, 1, None, False, w2, False)
+    f2 = np.poly1d(z2)
+
+
+  # Prediction
   for i in range(1,300):
     x2.append(prev_x + i*1)
     w2.append(1)
