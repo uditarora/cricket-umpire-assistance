@@ -1,4 +1,5 @@
 # Import the necessary packages
+from __future__ import division
 from collections import deque
 import numpy as np
 import argparse
@@ -9,6 +10,7 @@ import detector
 import linReg
 import quadFit
 import warnings
+import math
 
 DEBUG_VISUALIZE = True
 
@@ -44,7 +46,7 @@ def findRadius(frame, x, y, frame_no):
     """Function to find radius of the detected ball"""
 
     # Parameters to find radius of the ball
-    THRESHOLD_brightness = 90
+    THRESHOLD_brightness = 75
     MAX_INTENSITY = 255
     MIN_INTENSITY = 0
     # START_RADIUS = 21.8 #151
@@ -83,56 +85,56 @@ def findRadius(frame, x, y, frame_no):
 frame_no = 1
 initial_frame = 0
 
-# Rectangular Coordinates for lower half of the image
-y_start = 360
-y_end = 720
-x_start = 0
-x_end = 1080 
+# # Rectangular Coordinates for lower half of the image
+# y_start = 360
+# y_end = 720
+# x_start = 0
+# x_end = 1080 
     
-(grabbed1, prev) = camera.read()
-while True:
-    """
-        Captures the frame in which bowler starts to bowl
-    """
-    # Grab a frame and take difference from prev frame
-    (grabbed1, frame1) = camera.read()
-    frame_no += 1
-    if not grabbed1:
-        break
-
-    gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
-    gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-    final1 = gray1[y_start: y_end, x_start: x_end]
-    final2 = gray2[y_start: y_end, x_start: x_end]
-    difference = cv2.absdiff(final1, final2)
-    retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
-    prev = frame1
-    
-    # Count number of white difference pixels 
-    white = cv2.countNonZero(threshold)
-
-    # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
-    # Skip above mentioned number of frames
-    white_percentage = 0.02
-    lower_height = 360
-    lower_width = 1080
-
-    if white > (white_percentage * lower_width * lower_height):
-        cv2.imshow("Bowlers Frame",frame1)
-    
-        # Skip frames
-        for i in range(0,SKIP):
-            (grabbed1, frame1) = camera.read()
-
-        initial_frame = frame_no + SKIP
-        frame_no = frame_no + SKIP
-        break
-
-# for i in range(0,142):
+# (grabbed1, prev) = camera.read()
+# while True:
+#     """
+#         Captures the frame in which bowler starts to bowl
+#     """
+#     # Grab a frame and take difference from prev frame
 #     (grabbed1, frame1) = camera.read()
+#     frame_no += 1
+#     if not grabbed1:
+#         break
 
-# initial_frame = 142
-# frame_no = 142
+#     gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
+#     gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+#     final1 = gray1[y_start: y_end, x_start: x_end]
+#     final2 = gray2[y_start: y_end, x_start: x_end]
+#     difference = cv2.absdiff(final1, final2)
+#     retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
+#     prev = frame1
+    
+#     # Count number of white difference pixels 
+#     white = cv2.countNonZero(threshold)
+
+#     # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
+#     # Skip above mentioned number of frames
+#     white_percentage = 0.02
+#     lower_height = 360
+#     lower_width = 1080
+
+#     if white > (white_percentage * lower_width * lower_height):
+#         cv2.imshow("Bowlers Frame",frame1)
+    
+#         # Skip frames
+#         for i in range(0,SKIP):
+#             (grabbed1, frame1) = camera.read()
+
+#         initial_frame = frame_no + SKIP
+#         frame_no = frame_no + SKIP
+#         break
+
+for i in range(0,1):
+    (grabbed1, frame1) = camera.read()
+
+initial_frame = 1
+frame_no = 1
 
 # Ball detection
 # Find coordinates of the ball for the first time
@@ -171,7 +173,7 @@ while True:
     if(not(current_ballPos_temp[0] == 0 and current_ballPos_temp[1] == 0)):
         # Calculate coordinates according to full frame (1080*720) by adding ball coordinates to focussed window coordinates 
         current_ballPos = (current_ballPos_temp[0] + x_start, current_ballPos_temp[1] + y_start)
-        ball_detection.append(current_ballPos)
+        # ball_detection.append(current_ballPos)
         break
 
 
@@ -227,13 +229,13 @@ while True:
     if(current_ballPos_temp[0] == 0 and current_ballPos_temp[1] == 0):
         stop_search = stop_search + 1
         if stop_search == 5:
-        	break
+            break
         continue
     
     stop_search = 0
+    
     # Get coordinates according to full frame
     current_ballPos = (x1 + current_ballPos_temp[0], y1 + current_ballPos_temp[1])
-    
     # Crop the ball image
     img_ball = img_copy[current_ballPos[1]: current_ballPos[1] + 50, current_ballPos[0]: current_ballPos[0] + 50]
     
@@ -242,12 +244,15 @@ while True:
     # Call find radius
     findRadius(img_ball, current_ballPos[0], current_ballPos[1], frame_no)
 
+
 # Calculate the bouncing point and mark ball tracks
 bouncing_coordinates = (0,0)
 idx = 0
 bouncing_idx = 0
+last_frame1 = last_frame.copy()
 for (x, y) in ball_detection:
-    cv2.rectangle(last_frame, (x+23, y+23), (x+27, y+27), (0, 0, 0), thickness=2)
+    if idx > 51:
+        cv2.rectangle(last_frame, (x+23, y+23), (x+27, y+27), (0, 0, 0), thickness=2)
     if y > bouncing_coordinates[1]:
         bouncing_coordinates = (x,y)
         bouncing_idx = idx
@@ -255,20 +260,71 @@ for (x, y) in ball_detection:
 Textlines[bouncing_idx] = (Textlines[bouncing_idx][0], Textlines[bouncing_idx][1], Textlines[bouncing_idx][2], Textlines[bouncing_idx][3], 1)
 cv2.rectangle(last_frame, (bouncing_coordinates[0]+23, bouncing_coordinates[1]+23), (bouncing_coordinates[0]+27, bouncing_coordinates[1]+27), (0, 0, 255), thickness=2)
 
+
+
+corrected = []
+for i in range(0,bouncing_idx + 2):
+    corrected.append((ball_detection[i][0] + 25, ball_detection[i][1] + 25,Textlines[i][2], Textlines[i][3], Textlines[i][4]))
+
+if(len(ball_detection) >= bouncing_idx + 2):
+    prev_coord = (ball_detection[bouncing_idx + 1][0] + 25,ball_detection[bouncing_idx + 1][1] + 25,Textlines[bouncing_idx + 1][2], Textlines[bouncing_idx + 1][3], Textlines[bouncing_idx + 1][4])
+    print prev_coord
+    prev_slope = (prev_coord[1] - (ball_detection[bouncing_idx][1]+ 25) )/(prev_coord[0] - (25+ball_detection[bouncing_idx][0])) 
+    for i in range((bouncing_idx+2), len(ball_detection)):
+        current_coord = (ball_detection[i][0]+25,ball_detection[i][1]+25,Textlines[i][2], Textlines[i][3], Textlines[i][4])
+        print current_coord
+        if (current_coord[0] - prev_coord[0]) == 0:
+            slope = 100000
+        else:
+            slope = (current_coord[1] - prev_coord[1])/(current_coord[0] - prev_coord[0])
+        tn = (slope-prev_slope)/(1.0+(slope*prev_slope))
+        angle = math.atan(tn)*180.0/math.pi*(-1)
+        distance = ((current_coord[1] - prev_coord[1])*(current_coord[1] - prev_coord[1])) + ((current_coord[0] - prev_coord[0])*(current_coord[0] - prev_coord[0]))
+        print angle
+        print distance
+        # print "x1 " + str(current_coord[0]) + "y1 " + str(current_coord[1]) + "x2 " + str(prev_coord[0]) + "y2 " + str(prev_coord[1]) + "dist" + str(distance)
+        if angle < 0:
+            angle = angle* (-1)
+        if angle <= 15 or distance <= 400:
+            print "asd"
+            corrected.append(current_coord)  
+            prev_coord = current_coord
+            prev_slope = slope  
+
+# corrected = []
+# if(len(ball_detection) > bouncing_idx + 2):
+#   prev_coord = ball_detection[bouncing_idx + 1]
+#   prev_dist = ((prev_coord[1] - ball_detection[bouncing_idx][1])*(prev_coord[1] - ball_detection[bouncing_idx][1]))+((prev_coord[0] - ball_detection[bouncing_idx][0])*(prev_coord[0] - ball_detection[bouncing_idx][0]) ) 
+#   for i in range(bouncing_idx + 2,len(ball_detection)):
+#       current_coord = ball_detection[i]
+#       dist = ((current_coord[1] - prev_coord[1])*(current_coord[1] - prev_coord[1]))+((current_coord[0] - prev_coord[0])*(current_coord[0] - prev_coord[0]))
+#       # print " " + str(current_coord[1]) + " - " + str(prev_coord[1]) + "/" + str(current_coord[0]) + "- " + str(prev_coord[0]) + " angle" + str(angle) + " prev angle" + str(prev_angle)
+#       if dist > 5*prev_dist:
+#           continue
+#       corrected.append(current_coord) 
+#       prev_coord = current_coord
+        
+i = 0
+for (x,y,_,_,_) in corrected:
+    if i > bouncing_idx:
+        cv2.rectangle(last_frame1, (x-2, y-2), (x+2, y+2), (0, 255, 0), thickness=2)
+    i = i + 1    
+
 # Show the final tracked path!!
 if DEBUG_VISUALIZE:
     cv2.imshow("Ball Path", last_frame)
+    cv2.imshow("Ball Path1", last_frame1)
     cv2.imwrite("path.jpg", last_frame)
     cv2.waitKey(0)
 
 
 # Regressions
-linearReg = linReg.linearRegression(Textlines)
-quadraticReg = quadFit.quadraticRegression(Textlines)
+linearReg = linReg.linearRegression(corrected)
+quadraticReg = quadFit.quadraticRegression(corrected)
 
 # Qutput to text file
 idx = 0
-for (x,y,radius,frame_no,is_bouncing_point) in Textlines:
+for (x,y,radius,frame_no,is_bouncing_point) in corrected:
     Coordinates_file.write("{:.3f} {:.3f} {:.3f} {} {} {:.3f} {:.3f}\n".format(x, y, radius, frame_no, is_bouncing_point, linearReg[idx], quadraticReg[idx]))
     idx = idx + 1
 
