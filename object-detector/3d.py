@@ -1,6 +1,7 @@
 from visual import *
 import quadFit
 import temp1
+from PIL import Image
 
 rlist = []
 xlist = []
@@ -34,6 +35,9 @@ STUMP_WIDTH = 4.5
 WIDE_WIDTH = 264
 LINE_WIDTH = 5
 
+BATSMAN_HEIGHT = 160
+BATSMAN_WIDTH = 90
+
 BALL_RADIUS = 3.6
 
 FY = 1520.0
@@ -44,9 +48,9 @@ SCALE = [1, 0.5, PITCH_LENGTH - (2*CREASE_LENGTH)]
 bouncing_pt_idx = -1
 
 # Find world coordinates
-# with open('coordinates_wideright.txt') as coord_file:
-with open('coordinates_bouncer.txt') as coord_file:
-# with open('coordinates_171638.txt') as coord_file:  # LBW
+# with open('coordinates_wideright.txt') as coord_file:   # Wide right
+# with open('coordinates_bouncer.txt') as coord_file:
+with open('coordinates_171638.txt') as coord_file:  # LBW
 # with open('coordinates_171124.txt') as coord_file:    # Spin
 # with open('coordinates_slow2.txt') as coord_file:   # Spin
 # with open('coordinates_171619.txt') as coord_file:    # Fast ball
@@ -75,7 +79,10 @@ for i,radius in enumerate(rlist):
 coord_file.close()
 
 # Draw environment
-scene1 = display(title="Automated Cricket Umpiring - HawkEye", width=1280, height=720, range=10, background=(0.2,0.2,0.2), center=(0,30,30))
+scene1 = display(title="Automated Cricket Umpiring - HawkEye", width=1280, height=720, range=400, background=(0.2,0.2,0.2), center=(0,30,30))
+# scene1.stereo = 'redcyan'
+scene1.forward = (1,-0.2,0.02)
+# scene1.fov = 60*3.14/180
 # Draw pitch floor
 floor = box(pos=(0,0,0), size=(PITCH_LENGTH*1.2,PITCH_THICKNESS*1.2,PITCH_WIDTH), material=materials.unshaded, color=(0.97,0.94,0.6))
 floor_outer = box(pos=(0,0,0), size=(PITCH_LENGTH*1.25,PITCH_THICKNESS,PITCH_WIDTH*2), material=materials.unshaded, color=(0.2,0.7,0.27))
@@ -98,6 +105,12 @@ line1 = box(pos=(-PITCH_LENGTH/2,PITCH_THICKNESS/2,0), size=(LINE_WIDTH,5,WIDE_W
 line2 = box(pos=(-PITCH_LENGTH/2,PITCH_THICKNESS/2,132), size=(244,5,LINE_WIDTH), color=color.white)
 line3 = box(pos=(-PITCH_LENGTH/2,PITCH_THICKNESS/2,-132), size=(244,5,LINE_WIDTH), color=color.white)
 line4 = box(pos=(-PITCH_LENGTH/2+122,PITCH_THICKNESS/2,0), size=(LINE_WIDTH,5,366), color=color.white)
+
+# Draw batsman at wicket crease
+# im = Image.open('batsman.jpg')
+# # im.resize((64, 64))
+# tex = materials.texture(data=im)
+# batsman = box(pos=(PITCH_LENGTH/2-122,PITCH_THICKNESS+BATSMAN_HEIGHT/2,0), size=(LINE_WIDTH,BATSMAN_HEIGHT,BATSMAN_WIDTH), material=tex, opacity=0.5)
 
 
 # Draw balls
@@ -267,6 +280,9 @@ def get_nearest_ball_coords(idx, min_diff, before_wicket_idx, near_crease=False)
 
         return ynew, znew
 
+# Dictionary to store various decision parameters
+decision = {}
+
 # Check LBW Decision
 def check_lbw():
     """
@@ -280,27 +296,35 @@ def check_lbw():
     # Bounce found and in impace zone
     if bouncing_pt_idx != -1 and final_coords_3d[bouncing_pt_idx][2] <= WICKET_WIDTH/2:
         if final_coords_3d[bouncing_pt_idx][2] >= -WICKET_WIDTH/2:
+            decision['pitching'] = "INSIDE"
             print "PITCHING: INSIDE IMACT ZONE"
         else:
+            decision['pitching'] = "OUTSIDE OFF"
             print "PITCHING: OUTSIDE OFF"
         # Check if last point in impact zone
         if final_coords_3d[num_detected_points-1][2] >= -(WICKET_WIDTH/2+BALL_RADIUS) and final_coords_3d[num_detected_points-1][2] <= (WICKET_WIDTH/2+BALL_RADIUS):
+            decision['impact'] = "IN-LINE"
             print "IMPACT: IN-LINE"
             return check_nearest_coord(near_wicket_idx, min_diff, before_wicket_idx)
         else:
+            decision['impact'] = "OUTSIDE"
             print "IMPACT: OUTSIDE"
             return False
     # No bounce point found
     elif bouncing_pt_idx == -1:
-        print "PITCHING: NO BOUNCE"
+        decision['pitching'] = "DID NOT BOUNCE"
+        print "PITCHING: DID NOT BOUNCE"
         if final_coords_3d[num_detected_points-1][2] >= -(WICKET_WIDTH/2+BALL_RADIUS) and final_coords_3d[num_detected_points-1][2] <= (WICKET_WIDTH/2+BALL_RADIUS):
+            decision['impact'] = "IN-LINE"
             print "IMPACT: IN-LINE"
             return check_nearest_coord(near_wicket_idx, min_diff, before_wicket_idx)
         else:
+            decision['impact'] = "OUTSIDE"
             print "IMPACT: OUTSIDE"
             return False
     # Bounce out of impact zone
     else:
+        decision['pitching'] = "OUTSIDE LEG"
         print "PITCHING: OUTSIDE LEG"
         return False
 
@@ -317,11 +341,15 @@ def check_nearest_coord(idx, min_diff, before_wicket_idx):
         return False
 
 if check_lbw():
+    decision['lbw'] = "OUT"
+    decision['wickets'] = "HITTING"
     print "WICKETS: HITTING"
     print "\nLBW DECISION: OUT"
 else:
+    decision['lbw'] = "NOT OUT"
+    decision['wickets'] = "NOT HITTING"
     print "WICKETS: NOT HITTING"
-    print "\nLBW DECISION: NOT-OUT"
+    print "\nLBW DECISION: NOT OUT"
 
 # Check Wide Decision
 def check_wide():
@@ -338,8 +366,10 @@ def check_wide():
     # print "Y: {}, Z: {}".format(y,z)
 
     if z <= -(WIDE_WIDTH/2-LINE_WIDTH-BALL_RADIUS) or z >= (WICKET_WIDTH+BALL_RADIUS):
+        decision['wide'] = "WIDE"
         return True
     else:
+        decision['wide'] = "NOT WIDE"
         return False
 
 if check_wide():
@@ -355,3 +385,56 @@ def check_bouncer():
     near_wicket_idx, min_diff, before_wicket_idx = get_nearest_ball_params(near_crease=True)
     y, z = get_nearest_ball_coords(near_wicket_idx, min_diff, before_wicket_idx, near_crease=True)
 
+
+decision['noball'] = "NOT A NO-BALL"
+decision['bouncer'] = "NOT A BOUNCER"
+
+decision['lbwheading'] = "LBW DECISION"
+decision['wicketsheading'] = "WICKETS"
+decision['impactheading'] = "IMPACT"
+decision['pitchingheading'] = "PITCHING"
+decision['wideheading'] = "WIDE DECISION"
+decision['noballheading'] = "NO-BALL DECISION"
+decision['bouncerheading'] = "BOUNCER DECISION"
+
+# Pad text with spaces on both sides to make it the same size
+max_len = 0
+for key in decision:
+    if len(decision[key]) > max_len:
+        max_len = len(decision[key])
+for key in decision:
+    val = ''
+    for i in range((max_len-len(decision[key]))/2):
+        val += ' '
+    val += decision[key]
+    for i in range((max_len-len(decision[key]))/2):
+        val += ' '
+    # Adjust for odd values
+    if len(val) < max_len:
+        val += ' '
+    decision[key] = val
+
+TEXT_SIZE = 12
+TEXT_FONT = 'sans'
+
+# Draw Decision Labels on screen
+display1 = label(pos=(PITCH_LENGTH*1.5/2,700,-1000), text=decision['lbwheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display2 = label(pos=(PITCH_LENGTH*1.5/2,600,-1000), text=decision['lbw'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+
+display3 = label(pos=(PITCH_LENGTH*1.5/2,450,-1000), text=decision['wicketsheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display4 = label(pos=(PITCH_LENGTH*1.5/2,350,-1000), text=decision['wickets'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+
+display5 = label(pos=(PITCH_LENGTH*1.5/2,200,-1000), text=decision['impactheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display6 = label(pos=(PITCH_LENGTH*1.5/2,100,-1000), text=decision['impact'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+
+display7 = label(pos=(PITCH_LENGTH*1.5/2,-50,-1000), text=decision['pitchingheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display8 = label(pos=(PITCH_LENGTH*1.5/2,-150,-1000), text=decision['pitching'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+
+display9 = label(pos=(PITCH_LENGTH*1.5/2,700,1000), text=decision['wideheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display10 = label(pos=(PITCH_LENGTH*1.5/2,600,1000), text=decision['wide'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+
+display11 = label(pos=(PITCH_LENGTH*1.5/2,450,1000), text=decision['noballheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display12 = label(pos=(PITCH_LENGTH*1.5/2,350,1000), text=decision['noball'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+
+display13 = label(pos=(PITCH_LENGTH*1.5/2,200,1000), text=decision['bouncerheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+display14 = label(pos=(PITCH_LENGTH*1.5/2,100,1000), text=decision['bouncer'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
