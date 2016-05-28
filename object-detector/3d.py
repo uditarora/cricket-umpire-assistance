@@ -41,7 +41,8 @@ SCALE = [1, 0.5, PITCH_LENGTH - (2*CREASE_LENGTH)]
 bouncing_pt_idx = -1
 
 # Find world coordinates
-with open('coordinates_bouncer.txt') as coord_file:
+with open('coordinates_wideright.txt') as coord_file:
+# with open('coordinates_bouncer.txt') as coord_file:
 # with open('coordinates_171638.txt') as coord_file:
 # with open('coordinates_171124.txt') as coord_file:
 # with open('coordinates_slow2.txt') as coord_file:   # Spin
@@ -247,7 +248,7 @@ def check_nearest_coord(idx, min_diff, before_wicket_idx):
     """
     y, z = get_nearest_ball_coords(idx, min_diff, before_wicket_idx)
 
-    if y <= WICKET_HEIGHT and z >= -(WICKET_WIDTH/2+BALL_RADIUS) and z <= WICKET_WIDTH/2+BALL_RADIUS:
+    if y <= (WICKET_HEIGHT+BALL_RADIUS) and z >= -(WICKET_WIDTH/2+BALL_RADIUS) and z <= WICKET_WIDTH/2+BALL_RADIUS:
         return True
     else:
         return False
@@ -267,10 +268,12 @@ def check_wide():
     near_wicket_idx, min_diff, before_wicket_idx = get_nearest_ball_params(wide=True)
     y, z = get_nearest_ball_coords(near_wicket_idx, min_diff, before_wicket_idx, wide=True)
 
+
+    # Wide debug displays
     # box(pos=(coords_3d[before_wicket_idx][0],y/2,z), size=(10,y,5))
     # print "Y: {}, Z: {}".format(y,z)
 
-    if z <= -(WIDE_WIDTH/2-LINE_WIDTH) or z >= WICKET_WIDTH:
+    if z <= -(WIDE_WIDTH/2-LINE_WIDTH-BALL_RADIUS) or z >= (WICKET_WIDTH+BALL_RADIUS):
         return True
     else:
         return False
