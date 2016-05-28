@@ -24,10 +24,11 @@ warnings.filterwarnings("ignore")
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video", help="path to the video file", required=True)
 ap.add_argument("-a", "--attack", help="specify bowling attack - 1 for Spin bowling and 0 for Fast", default=0)
+ap.add_argument("-s", "--sliding", help="Show sliding", default=0)
 args = vars(ap.parse_args())
 camera = cv2.VideoCapture(args["video"])
 bowling_attack = int(args["attack"])
-
+show_slide = int(args["sliding"])
 # Number of frames to skip after initial movement detected
 SKIP = 45
 
@@ -91,55 +92,55 @@ frame_no = 1
 initial_frame = 0
 
 # Rectangular Coordinates for lower half of the image
-# y_start = 360
-# y_end = 720
-# x_start = 0
-# x_end = 1080 
+y_start = 360
+y_end = 720
+x_start = 0
+x_end = 1080 
     
-# (grabbed1, prev) = camera.read()
-# while True:
-#     """
-#         Captures the frame in which bowler starts to bowl
-#     """
-#     # Grab a frame and take difference from prev frame
-#     (grabbed1, frame1) = camera.read()
-#     frame_no += 1
-#     if not grabbed1:
-#         break
-
-#     gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
-#     gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-#     final1 = gray1[y_start: y_end, x_start: x_end]
-#     final2 = gray2[y_start: y_end, x_start: x_end]
-#     difference = cv2.absdiff(final1, final2)
-#     retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
-#     prev = frame1
-    
-#     # Count number of white difference pixels 
-#     white = cv2.countNonZero(threshold)
-
-#     # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
-#     # Skip above mentioned number of frames
-#     white_percentage = 0.02
-#     lower_height = 360
-#     lower_width = 1080
-
-#     if white > (white_percentage * lower_width * lower_height):
-#         cv2.imshow("Bowlers Frame",frame1)
-    
-#         # Skip frames
-#         for i in range(0,SKIP):
-#             (grabbed1, frame1) = camera.read()
-
-#         initial_frame = frame_no + SKIP
-#         frame_no = frame_no + SKIP
-#         break
-
-for i in range(0,1):
+(grabbed1, prev) = camera.read()
+while True:
+    """
+        Captures the frame in which bowler starts to bowl
+    """
+    # Grab a frame and take difference from prev frame
     (grabbed1, frame1) = camera.read()
+    frame_no += 1
+    if not grabbed1:
+        break
 
-initial_frame = 1
-frame_no = 1
+    gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+    final1 = gray1[y_start: y_end, x_start: x_end]
+    final2 = gray2[y_start: y_end, x_start: x_end]
+    difference = cv2.absdiff(final1, final2)
+    retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
+    prev = frame1
+    
+    # Count number of white difference pixels 
+    white = cv2.countNonZero(threshold)
+
+    # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
+    # Skip above mentioned number of frames
+    white_percentage = 0.02
+    lower_height = 360
+    lower_width = 1080
+
+    if white > (white_percentage * lower_width * lower_height):
+        # cv2.imshow("Bowlers Frame",frame1)
+    
+        # Skip frames
+        for i in range(0,SKIP):
+            (grabbed1, frame1) = camera.read()
+
+        initial_frame = frame_no + SKIP
+        frame_no = frame_no + SKIP
+        break
+
+# for i in range(0,1):
+#     (grabbed1, frame1) = camera.read()
+
+# initial_frame = 1
+# frame_no = 1
 
 # Ball detection
 # Find coordinates of the ball for the first time
@@ -172,7 +173,7 @@ while True:
     current_ballPos_temp = (0,0)
 
     # Image sent to detector.py to get ball coordinates
-    current_ballPos_temp = detector.find(crop_img, step_size, threshold)
+    current_ballPos_temp = detector.find(crop_img, step_size, threshold,gray_image_1,x_start,y_start,x_end, y_end)
     
     # If ball coordinate is not (0,0), it means ball has been detected
     if(not(current_ballPos_temp[0] == 0 and current_ballPos_temp[1] == 0)):
@@ -187,7 +188,7 @@ while True:
 # Parameters for detector.py
 step_size = (3, 3)
 threshold = 0.2
-cv2.imshow("Balls First Frame",frame1)
+# cv2.imshow("Balls First Frame",frame1)
 stop_search = 0
       
 while True:
@@ -207,6 +208,7 @@ while True:
     last_frame = frame1
     gray_image_1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
     img_copy = gray_image_1.copy()
+    img_copy_1 = gray_image_1.copy()
     
     # New window coordinates for searching
     x1 = current_ballPos[0] - 50        
@@ -228,7 +230,7 @@ while True:
     crop_img = gray_image_1[y1: y2, x1: x2]
     
     # Image sent to detector.py to get ball coordinates
-    current_ballPos_temp = detector.find(crop_img, step_size,threshold)
+    current_ballPos_temp = detector.find(crop_img, step_size,threshold,img_copy_1,x1,y1,x2,y2,show_slide)
     
     # If not detected
     if(current_ballPos_temp[0] == 0 and current_ballPos_temp[1] == 0):
@@ -257,13 +259,13 @@ idx = 0
 bouncing_idx = 0
 last_frame1 = last_frame.copy()
 for (x, y) in ball_detection:
-    cv2.rectangle(last_frame, (x+23, y+23), (x+27, y+27), (0, 0, 0), thickness=2)
+    # cv2.rectangle(last_frame, (x+23, y+23), (x+27, y+27), (0, 0, 0), thickness=2)
     if y > bouncing_coordinates[1]:
         bouncing_coordinates = (x,y)
         bouncing_idx = idx
     idx = idx + 1
 Textlines[bouncing_idx] = (Textlines[bouncing_idx][0], Textlines[bouncing_idx][1], Textlines[bouncing_idx][2], Textlines[bouncing_idx][3], 1)
-cv2.rectangle(last_frame, (bouncing_coordinates[0]+23, bouncing_coordinates[1]+23), (bouncing_coordinates[0]+27, bouncing_coordinates[1]+27), (0, 0, 255), thickness=2)
+cv2.rectangle(last_frame, (bouncing_coordinates[0]+23, bouncing_coordinates[1]+23), (bouncing_coordinates[0]+27, bouncing_coordinates[1]+27), (255, 0, 0), thickness=2)
 
 idx = 0
 for (x, y) in ball_detection:
@@ -274,7 +276,9 @@ for (x, y) in ball_detection:
 
 
 corrected = []
+rejected = []
 for i in range(0,bouncing_idx + 2):
+    print i
     corrected.append((ball_detection[i][0] + 25, ball_detection[i][1] + 25,Textlines[i][2], Textlines[i][3], Textlines[i][4]))
 
 if(len(ball_detection) >= bouncing_idx + 2):
@@ -296,10 +300,12 @@ if(len(ball_detection) >= bouncing_idx + 2):
         # print "x1 " + str(current_coord[0]) + "y1 " + str(current_coord[1]) + "x2 " + str(prev_coord[0]) + "y2 " + str(prev_coord[1]) + "dist" + str(distance)
         if angle < 0:
             angle = angle* (-1)
-        if angle <= 15 or distance <= 400:
+        if angle <= 25 or distance <= 500:
             corrected.append(current_coord)  
             prev_coord = current_coord
-            prev_slope = slope  
+            prev_slope = slope
+        else:
+            rejected.append((current_coord[0],current_coord[1]))      
 
 # corrected = []
 # if(len(ball_detection) > bouncing_idx + 2):
@@ -320,6 +326,9 @@ for (x,y,_,_,_) in corrected:
         cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 255, 0), thickness=2)
     i = i + 1    
 
+for (x,y) in rejected:
+    cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 0, 255), thickness=2)
+    
 # Show the final tracked path!!
 if DEBUG_VISUALIZE:
     cv2.imshow("Ball Path", last_frame)
