@@ -11,6 +11,8 @@ import linReg
 import quadFit
 import warnings
 import math
+from imutils.object_detection import non_max_suppression
+from imutils import paths
 
 DEBUG_VISUALIZE = True
 
@@ -47,7 +49,7 @@ def findRadius(frame, x, y, frame_no):
     """Function to find radius of the detected ball"""
 
     # Parameters to find radius of the ball
-    THRESHOLD_brightness = 75
+    THRESHOLD_brightness = 90
     MAX_INTENSITY = 255
     MIN_INTENSITY = 0
     # START_RADIUS = 21.8 #151
@@ -190,6 +192,16 @@ step_size = (3, 3)
 threshold = 0.2
 # cv2.imshow("Balls First Frame",frame1)
 stop_search = 0
+
+# initialize the HOG descriptor/person detector
+hog = cv2.HOGDescriptor()
+hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
+
+# Dictionary storing the (xmid,ymid) coordinates of batsman rectangle
+batsman_mid = {}
+# If the batsman hasn't been detected so far this value is True
+batsman_first_detection = True
+batsman_area = ()
       
 while True:
     """
@@ -202,13 +214,51 @@ while True:
         break
 
     if frame_no > initial_frame + DURATION:
-        break 
-            
+        break
+
     # cv2.imshow("Current Grabbed Frame",frame1)
     last_frame = frame1
     gray_image_1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
     img_copy = gray_image_1.copy()
     img_copy_1 = gray_image_1.copy()
+
+    # detect people in the image
+    if not batsman_first_detection:
+        batsman_crop = frame1[batsman_area[1]:batsman_area[3], batsman_area[0]:batsman_area[2]]
+    else:
+        batsman_crop = frame1
+
+    cv2.imshow("batsman_crop", batsman_crop)
+    (rects, weights) = hog.detectMultiScale(batsman_crop, winStride=(4, 4), padding=(8, 8), scale=1.05)
+    # apply non-maxima suppression to the bounding boxes using a
+    # fairly large overlap threshold to try to maintain overlapping
+    # boxes that are still people
+    rects = np.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
+
+    if len(rects) > 0:
+        pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
+        xmid = 0
+        ymid = 0
+        max_rect = ()
+        for (x1, y1, x2, y2) in pick:
+            if (x1+x2)/2 > xmid:
+                xmid = (x1+x2)/2
+                ymid = (y1+y2)/2
+                max_rect = (x1, y1, x2, y2)
+
+        # Batsman search in full frame
+        if batsman_first_detection:
+            cv2.rectangle(img_copy_1, (max_rect[0], max_rect[1]), (max_rect[2], max_rect[3]), (0, 255, 0), 2)
+            batsman_mid[frame_no] = (xmid,ymid)
+        # Batsman search in cropped frame
+        else:
+            cv2.rectangle(img_copy_1, (max_rect[0]+batsman_area[0], max_rect[1]+batsman_area[1]), (max_rect[2]+batsman_area[0], max_rect[3]+batsman_area[1]), (0, 255, 0), 2)
+            batsman_mid[frame_no] = (xmid+batsman_area[0],ymid+batsman_area[1])
+
+        # Set batsman crop area after first detection
+        if batsman_first_detection:
+            batsman_first_detection = False
+            batsman_area = (max_rect[0]-100, 100, max_rect[2]+100, max_rect[3]+100)
     
     # New window coordinates for searching
     x1 = current_ballPos[0] - 50        
@@ -278,12 +328,12 @@ for (x, y) in ball_detection:
 corrected = []
 rejected = []
 for i in range(0,bouncing_idx + 2):
-    print i
+    # print i
     corrected.append((ball_detection[i][0] + 25, ball_detection[i][1] + 25,Textlines[i][2], Textlines[i][3], Textlines[i][4]))
 
 if(len(ball_detection) >= bouncing_idx + 2):
     prev_coord = (ball_detection[bouncing_idx + 1][0] + 25,ball_detection[bouncing_idx + 1][1] + 25,Textlines[bouncing_idx + 1][2], Textlines[bouncing_idx + 1][3], Textlines[bouncing_idx + 1][4])
-    print prev_coord
+    # print prev_coord
     prev_slope = (prev_coord[1] - (ball_detection[bouncing_idx][1]+ 25) )/(prev_coord[0] - (25+ball_detection[bouncing_idx][0])) 
     for i in range((bouncing_idx+2), len(ball_detection)):
         current_coord = (ball_detection[i][0]+25,ball_detection[i][1]+25,Textlines[i][2], Textlines[i][3], Textlines[i][4])
@@ -340,10 +390,13 @@ if DEBUG_VISUALIZE:
 linearReg = linReg.linearRegression(corrected)
 quadraticReg = quadFit.quadraticRegression(corrected)
 
-# Qutput to text file
+# Qutput to text file in the format: [x y radius frame_no is_bouncing_point regressed_radius regressed_y batsman_mid_x batsman_mid_y]
 idx = 0
 for (x,y,radius,frame_no,is_bouncing_point) in corrected:
-    Coordinates_file.write("{:.3f} {:.3f} {:.3f} {} {} {:.3f} {:.3f}\n".format(x, y, radius, frame_no, is_bouncing_point, linearReg[idx], quadraticReg[idx]))
+    if frame_no not in batsman_mid:
+        batsman_mid[frame_no][0] = -1
+        batsman_mid[frame_no][1] = -1
+    Coordinates_file.write("{:.3f} {:.3f} {:.3f} {} {} {:.3f} {:.3f} {} {}\n".format(x, y, radius, frame_no, is_bouncing_point, linearReg[idx], quadraticReg[idx], batsman_mid[frame_no][0], batsman_mid[frame_no][1]))
     idx = idx + 1
 
 # Close coordinates text file

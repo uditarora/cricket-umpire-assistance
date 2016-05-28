@@ -9,6 +9,7 @@ ylist = []
 zlist = []
 bouncing_pt = []
 frames_list = []
+batsman_mid_list = []
 
 FPS = 120.0
 
@@ -49,13 +50,13 @@ bouncing_pt_idx = -1
 
 # Find world coordinates
 # with open('coordinates_wideright.txt') as coord_file:   # Wide right
-# with open('coordinates_bouncer.txt') as coord_file:
+# with open('coordinates_bouncer.txt') as coord_file:   # Bouncer
 with open('coordinates_171638.txt') as coord_file:  # LBW
 # with open('coordinates_171124.txt') as coord_file:    # Spin
 # with open('coordinates_slow2.txt') as coord_file:   # Spin
 # with open('coordinates_171619.txt') as coord_file:    # Fast ball
     for i,row in enumerate(coord_file):
-        x,y,r,frame_no,is_bouncing_pt,r_new,y_new= row.split()
+        x,y,r,frame_no,is_bouncing_pt,r_new,y_new,batsman_xmid,batsman_ymid = row.split()
         r_new = float(r_new)
         x = ((float(x)-XWASTE)*305/500)-152
         y = (720.0-float(y_new))*SCALE[1]
@@ -71,17 +72,37 @@ with open('coordinates_171638.txt') as coord_file:  # LBW
         # END_RADIUS = r_new
         rlist.append(r_new)
 
+        batsman_mid_list.append((float(batsman_xmid), float(batsman_ymid)))
+
 for i,radius in enumerate(rlist):   
     z = (START_RADIUS-radius)/(START_RADIUS-END_RADIUS)
     zlist.append(z*SCALE[2])
+
+def getBatsmanHeight():
+    yavg = 0.0
+    for (x,y) in batsman_mid_list:
+        yavg += y
+    yavg = float(yavg)/len(batsman_mid_list)
+    # print "Yavg from file: "+str(yavg)
+
+    yavg = (720.0-float(yavg))*SCALE[1]
+    # print "Yavg after scaling: "+str(yavg)
+
+    height = yavg*FY/(FY + (PITCH_LENGTH/2-122))
+    # print "Yavg after perspective: "+str(height)
+
+    return height*2*0.8
+
+BATSMAN_HEIGHT = getBatsmanHeight()
+print "Batsman's height: "+str(BATSMAN_HEIGHT)
 
 # textFile = open("3d_debug.txt", "w")
 coord_file.close()
 
 # Draw environment
-scene1 = display(title="Automated Cricket Umpiring - HawkEye", width=1280, height=720, range=400, background=(0.2,0.2,0.2), center=(0,30,30))
+scene1 = display(title="Automated Cricket Umpiring - HawkEye", width=1280, height=720, range=800, background=(0.2,0.2,0.2), center=(0,30,30))
 # scene1.stereo = 'redcyan'
-scene1.forward = (1,-0.2,0.02)
+scene1.forward = (-1,-0.05,0.02)
 # scene1.fov = 60*3.14/180
 # Draw pitch floor
 floor = box(pos=(0,0,0), size=(PITCH_LENGTH*1.2,PITCH_THICKNESS*1.2,PITCH_WIDTH), material=materials.unshaded, color=(0.97,0.94,0.6))
