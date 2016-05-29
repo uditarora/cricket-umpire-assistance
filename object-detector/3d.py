@@ -11,6 +11,8 @@ bouncing_pt = []
 frames_list = []
 batsman_mid_list = []
 
+SHOW_LABELS = True
+
 FPS = 120.0
 
 START_RADIUS = 0.0
@@ -21,6 +23,9 @@ START_RADIUS = 16
 # WICKET_RADIUS = 4
 END_RADIUS = 3.5
 WICKET_RADIUS = 3.2
+
+# END_RADIUS = 3.0
+# WICKET_RADIUS = 2.7
 
 PITCH_WIDTH = 305.0
 PITCH_LENGTH = 2012.0
@@ -48,11 +53,12 @@ SCALE = [1, 0.5, PITCH_LENGTH - (2*CREASE_LENGTH)]
 bouncing_pt_idx = -1
 
 # Find world coordinates
+# with open('coordinates.txt') as coord_file:   # Current
 # with open('coordinates_wideright.txt') as coord_file:   # Wide right
-with open('coordinates_171602.txt') as coord_file:   # Bouncer
-    END_RADIUS = 4.5
-    WICKET_RADIUS = 4
-# with open('coordinates_171638.txt') as coord_file:  # LBW
+# with open('coordinates_171602.txt') as coord_file:   # Bouncer
+#     END_RADIUS = 4.5
+#     WICKET_RADIUS = 4
+with open('coordinates_171638.txt') as coord_file:  # LBW
 # with open('coordinates_171124.txt') as coord_file:    # Spin
 # with open('coordinates_slow2.txt') as coord_file:   # Spin
 # with open('coordinates_171619.txt') as coord_file:    # Fast ball
@@ -82,6 +88,8 @@ for i,radius in enumerate(rlist):
 def getBatsmanHeight():
     yavg = 0.0
     for (x,y) in batsman_mid_list:
+        if y == -1:
+            continue
         yavg += y
     yavg = float(yavg)/len(batsman_mid_list)
     # print "Yavg from file: "+str(yavg)
@@ -219,6 +227,8 @@ for idx in range(num_detected_points, len(coords_3d),20):
 speed_list = []
 # Stores the average delivery speed before bounce
 average_speed = 0.0
+# Stores the number of values added in average speed calculation
+average_length = 0
 
 # Calculate speed at detected points
 for idx in range(num_detected_points):
@@ -229,8 +239,9 @@ for idx in range(num_detected_points):
         time = float(frames_list[idx]-frames_list[idx-1])/FPS
         speed = (mag(displacement)/time)*3.6/100
         speed_list.append(speed)
-        if idx <= bouncing_pt_idx:
+        if idx <= bouncing_pt_idx or bouncing_pt_idx == 0:
             average_speed += speed
+            average_length += 1
 
     # Debug printing
     # print "Speed[{}]: {}".format(idx, speed_list[idx])
@@ -239,7 +250,7 @@ for idx in range(num_detected_points):
     #     print "x1: {}, y1: {}, z1: {}\nx2: {}, y2: {}, z2: {}\n".format(final_coords_3d[idx-1][0], final_coords_3d[idx-1][1], final_coords_3d[idx-1][2], final_coords_3d[idx][0], final_coords_3d[idx][1], final_coords_3d[idx][2])
     #     box(pos=(final_coords_3d[idx][0],final_coords_3d[idx][1]/2,final_coords_3d[idx][2]), size=(5,final_coords_3d[idx][1],5))
 
-average_speed = average_speed/(bouncing_pt_idx+1)
+average_speed = average_speed/(average_length)
 
 print "Speed of delivery: {:.3f} km/h".format(average_speed)
 
@@ -465,6 +476,8 @@ decision['pitchingheading'] = "PITCHING"
 decision['wideheading'] = "WIDE DECISION"
 decision['noballheading'] = "NO BALL DECISION"
 decision['bouncerheading'] = "BOUNCER DECISION"
+decision['speedheading'] = "SPEED"
+decision['speed'] = "{:.2f} KM/H".format(average_speed)
 
 # Pad text with spaces on both sides to make it the same size
 max_len = 0
@@ -487,23 +500,27 @@ TEXT_SIZE = 12
 TEXT_FONT = 'sans'
 
 # Draw Decision Labels on screen
-display1 = label(pos=(-PITCH_LENGTH*1.5/2,700,-1000), text=decision['lbwheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display2 = label(pos=(-PITCH_LENGTH*1.5/2,600,-1000), text=decision['lbw'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+if SHOW_LABELS:
+    display1 = label(pos=(-PITCH_LENGTH*1.5/2,700,-1000), text=decision['lbwheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display2 = label(pos=(-PITCH_LENGTH*1.5/2,600,-1000), text=decision['lbw'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display3 = label(pos=(-PITCH_LENGTH*1.5/2,450,-1000), text=decision['wicketsheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display4 = label(pos=(-PITCH_LENGTH*1.5/2,350,-1000), text=decision['wickets'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display3 = label(pos=(-PITCH_LENGTH*1.5/2,450,-1000), text=decision['wicketsheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display4 = label(pos=(-PITCH_LENGTH*1.5/2,350,-1000), text=decision['wickets'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display5 = label(pos=(-PITCH_LENGTH*1.5/2,200,-1000), text=decision['impactheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display6 = label(pos=(-PITCH_LENGTH*1.5/2,100,-1000), text=decision['impact'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display5 = label(pos=(-PITCH_LENGTH*1.5/2,200,-1000), text=decision['impactheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display6 = label(pos=(-PITCH_LENGTH*1.5/2,100,-1000), text=decision['impact'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display7 = label(pos=(-PITCH_LENGTH*1.5/2,-50,-1000), text=decision['pitchingheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display8 = label(pos=(-PITCH_LENGTH*1.5/2,-150,-1000), text=decision['pitching'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display7 = label(pos=(-PITCH_LENGTH*1.5/2,-50,-1000), text=decision['pitchingheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display8 = label(pos=(-PITCH_LENGTH*1.5/2,-150,-1000), text=decision['pitching'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display9 = label(pos=(-PITCH_LENGTH*1.5/2,700,1000), text=decision['wideheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display10 = label(pos=(-PITCH_LENGTH*1.5/2,600,1000), text=decision['wide'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display9 = label(pos=(-PITCH_LENGTH*1.5/2,700,1000), text=decision['wideheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display10 = label(pos=(-PITCH_LENGTH*1.5/2,600,1000), text=decision['wide'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display11 = label(pos=(-PITCH_LENGTH*1.5/2,450,1000), text=decision['noballheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display12 = label(pos=(-PITCH_LENGTH*1.5/2,350,1000), text=decision['noball'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display11 = label(pos=(-PITCH_LENGTH*1.5/2,450,1000), text=decision['noballheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display12 = label(pos=(-PITCH_LENGTH*1.5/2,350,1000), text=decision['noball'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-display13 = label(pos=(-PITCH_LENGTH*1.5/2,200,1000), text=decision['bouncerheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-display14 = label(pos=(-PITCH_LENGTH*1.5/2,100,1000), text=decision['bouncer'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display13 = label(pos=(-PITCH_LENGTH*1.5/2,200,1000), text=decision['bouncerheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display14 = label(pos=(-PITCH_LENGTH*1.5/2,100,1000), text=decision['bouncer'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+
+    display15 = label(pos=(-PITCH_LENGTH*1.5/2,700,0), text=decision['speedheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display16 = label(pos=(-PITCH_LENGTH*1.5/2,600,0), text=decision['speed'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)

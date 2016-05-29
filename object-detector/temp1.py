@@ -48,8 +48,8 @@ def quadraticRegression(data):
     
     # calculate new x's and y's
     x_new1 = x1
-    # y_new1 = f1(x_new1)
-    y_new1 = y1
+    y_new1 = f1(x_new1)
+    # y_new1 = y1
 
 
   # calculate polynomial after bounce
