@@ -53,11 +53,11 @@ SCALE = [1, 0.5, PITCH_LENGTH - (2*CREASE_LENGTH)]
 bouncing_pt_idx = -1
 
 # Find world coordinates
-# with open('coordinates.txt') as coord_file:   # Current
+with open('coordinates.txt') as coord_file:   # Current
 # with open('coordinates_wideright.txt') as coord_file:   # Wide right
-with open('coordinates_171602.txt') as coord_file:   # Bouncer
-    END_RADIUS = 4.5
-    WICKET_RADIUS = 4
+# with open('coordinates_171602.txt') as coord_file:   # Bouncer
+#     END_RADIUS = 4.5
+#     WICKET_RADIUS = 4
 # with open('coordinates_171638.txt') as coord_file:  # LBW
 # with open('coordinates_171124.txt') as coord_file:    # Spin
 # with open('coordinates_171514.txt') as coord_file:   # Spin

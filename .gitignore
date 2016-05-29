@@ -1,4 +1,6 @@
 *.pyc
 object-detector/coordinates.txt
+gui/coordinates.txt
+gui/args.txt
 *.jpg
 *.mp4

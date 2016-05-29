@@ -1,0 +1,115 @@
+<MainMenuScreen>:
+    fname_label: fname_label
+    BoxLayout:
+        orientation: 'vertical'
+        canvas:
+            Color:
+                rgba: 1, 1, 1, 0.8
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 0.07
+            canvas:
+                Color:
+                    rgba: 0.1, 1, 0.1, 0.4
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+        	Label:
+                id: title
+                color: (0, 0.3, 0.8, 1)
+                font_size: '24sp'
+                text: 'Cricket Ball Tracking for Umpire Assistance'
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 0.4
+            padding: 0,50
+            BoxLayout:
+                size_hint_y: 0.03
+                orientation: 'horizontal'
+                Label:
+                    text: "Videos"
+                Label:
+                    text: "Selected Video"
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: 0.3
+                FileChooserIconView:
+                    id: filechooser
+                    size_hint_x: 0.65
+                    filters: ['*.mp4']
+                    rootpath: '/Users/udit/Desktop/btp_videos'
+                    background_color: [1, 0, 0, 0.5]
+                    on_selection: root.selected(filechooser.selection)
+                Label:
+                    size_hint_x: 0.35
+                    id: fname_label
+                    text_size: self.size
+                    halign: "left"
+                    valign: "middle"
+                    #padding: 0,50
+                #Label:
+                    #size_hint_y: 0.1
+            BoxLayout:
+                size_hint_y: 0.2
+                padding: 600,50
+                orientation: 'horizontal'
+                Spinner:
+                    id: action_spinner
+                    text: 'Select Bowling Action'
+                    #size_hint_y: 'None'
+                    #height: '40dp'
+                    values: ('Fast', 'Spin', 'No-Action')
+                    on_text: root.set_action(self.text)
+                Label:
+                    size_hint_x: 0.1
+                ToggleButton:
+                    text: 'Sliding Windows'
+                    on_press: root.toggle_sliding(self.state)
+                Label:
+                    size_hint_x: 0.1
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: 0.1
+                Label:
+                    size_hint_x: 0.1
+                Button:
+                	text: 'Play Video'
+                    size_hint_x: 0.2
+                    padding: 10,50
+                    #pos_hint: {'x': .2, 'y': .85}
+                    on_press: root.open(filechooser.path, filechooser.selection)
+                Label:
+                    size_hint_x: 0.1
+                Button:
+                    text: 'Analyze'
+                    size_hint_x: 0.2
+                    padding: 10,50
+                    on_press: root.analyze(filechooser.selection)
+                Label:
+                    size_hint_x: 0.1
+                Button:
+                    text: 'Visualize'
+                    size_hint_x: 0.2
+                    padding: 10,50
+                    on_press: root.visualize()
+                Label:
+                    size_hint_x: 0.1
+        BoxLayout:
+            orientation: 'horizontal'
+            #pos_hint: {'x': 0, 'y': 0}
+            #size_hint: 1,0.2
+            size_hint_y: 0.3
+            Image:
+                source: "nsit_logo.png"
+                size_hint: 0.5, 0.8
+                #pos_hint: {'x': .4, 'y': .2}
+            Label:
+                text: 'Developers:\nUdit Arora (381CO12)\nSohit Verma (365CO12)\nSarthak Sahni (356CO12)\n\nUnder the guidance of:\nDr. Pinaki Chakraborty'
+                size_hint: 0.5, 1
+                #pos_hint: {'x': .2, 'y': .07}
+                text_size: self.size
+                halign: "left"
+                valign: "middle"
