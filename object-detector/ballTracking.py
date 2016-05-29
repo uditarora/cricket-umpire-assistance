@@ -44,12 +44,14 @@ DURATION = 50
 if bowling_attack:
     DURATION = 80
 
-def findRadius(frame, x, y, frame_no):
+rejected_radius = []
+
+def findRadius(frame, window_x, window_y, frame_no):
 
     """Function to find radius of the detected ball"""
 
     # Parameters to find radius of the ball
-    THRESHOLD_brightness = 90
+    THRESHOLD_brightness = 75
     MAX_INTENSITY = 255
     MIN_INTENSITY = 0
     # START_RADIUS = 21.8 #151
@@ -57,6 +59,40 @@ def findRadius(frame, x, y, frame_no):
     # PITCH_DIST = 16
     blurredFrame = cv2.GaussianBlur(frame,(5,5),0)
     # cv2.imshow("Blurred Frame", blurredFrame)
+
+    height, width = blurredFrame.shape[:2]
+    frame_center_x = width/2
+    frame_center_y = height/2
+
+    # Find average color of the entire frame
+    avg_color_frame = float(np.sum(blurredFrame))/float(width*height)
+
+    # Find average color around the blurred frame center
+    avg_color_ball = 0.0
+    for dx in range(1,6):
+        for dy in range(1,6):
+            avg_color_ball += blurredFrame[frame_center_y+dy][frame_center_x+dx]
+    avg_color_ball /= 25.0
+
+    # Checks if any points has to be rejected based on below params
+    returnVal = True
+
+    # If ball is too bright reject it
+    if avg_color_ball > 110.0:
+        THRESHOLD_brightness = 100.0
+        returnVal = False
+    elif avg_color_ball > 100.0:
+        THRESHOLD_brightness = 95.0
+    elif avg_color_ball > 80.0:
+        THRESHOLD_brightness = min(90.0,avg_color_ball)
+    elif avg_color_ball < 65.0:
+        THRESHOLD_brightness = 65.0
+    else:
+        THRESHOLD_brightness = 75.0
+
+    if avg_color_frame - avg_color_ball < 20:
+        # print "Difference in colors = {} is too less. Reject.".format(avg_color_frame - avg_color_ball)
+        returnVal = False
 
     for i in range(len(blurredFrame)):
         for j in range(len(blurredFrame[0])):
@@ -70,6 +106,36 @@ def findRadius(frame, x, y, frame_no):
     cv2.drawContours(blurredFrame, contours, -1, (255,0,0), 1)
     # cv2.imshow("Contours", blurredFrame)
 
+    centre_X = 0
+    centre_Y = 0
+    radius = 0
+    min_diff = 100000
+    # Find contour closest to centre
+    for contour in contours:
+        (x,y),r = cv2.minEnclosingCircle(contour)
+        diff = abs(x-25)+abs(y-25)
+        if diff < min_diff:
+            if r < 1:
+                # print "Radius too low. Reject contour."
+                continue
+            # print "Found new min at: {},{} with r={}".format(x,y,r)
+            centre_X = x
+            centre_Y = y
+            radius = r
+            min_diff = diff
+        elif diff == min_diff:
+            if r > radius:
+                centre_X = x
+                centre_Y = y
+                radius = r
+    if min_diff > 20:
+        # Selected contour is too far away from centre. Reject point
+        returnVal = False
+
+    if radius < 3.0:
+        # Radius is too low, reject
+        returnVal = False
+
     if len(contours) == 0:
         return False
 
@@ -81,9 +147,14 @@ def findRadius(frame, x, y, frame_no):
     # centre_X,centre_Y,radius = findAppropriateCircle(contours[circleIndex])
     (centre_X,centre_Y),radius = cv2.minEnclosingCircle(contours[circleIndex])
     cv2.circle(frame,(int(centre_X),int(centre_Y)), int(radius), (255,0,0), 2)
+
+    if returnVal == False:
+        rejected_radius.append((int(window_x+centre_X), int(window_y+centre_Y)))
+        return False
+
     if DEBUG_VISUALIZE:
        cv2.imshow("Best Fit Circle",frame)
-    Textlines.append((x+centre_X, y+centre_Y, radius, frame_no,0))
+    Textlines.append((window_x+centre_X, window_y+centre_Y, radius, frame_no,0))
 
     return True
 
@@ -93,56 +164,59 @@ def findRadius(frame, x, y, frame_no):
 frame_no = 1
 initial_frame = 0
 
-# Rectangular Coordinates for lower half of the image
-y_start = 360
-y_end = 720
-x_start = 0
-x_end = 1080 
+# Comment for ball at first frame
+# # Rectangular Coordinates for lower half of the image
+# y_start = 360
+# y_end = 720
+# x_start = 0
+# x_end = 1080 
     
-(grabbed1, prev) = camera.read()
-while True:
-    """
-        Captures the frame in which bowler starts to bowl
-    """
-    # Grab a frame and take difference from prev frame
-    (grabbed1, frame1) = camera.read()
-    frame_no += 1
-    if not grabbed1:
-        break
-
-    gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
-    gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-    final1 = gray1[y_start: y_end, x_start: x_end]
-    final2 = gray2[y_start: y_end, x_start: x_end]
-    difference = cv2.absdiff(final1, final2)
-    retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
-    prev = frame1
-    
-    # Count number of white difference pixels 
-    white = cv2.countNonZero(threshold)
-
-    # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
-    # Skip above mentioned number of frames
-    white_percentage = 0.02
-    lower_height = 360
-    lower_width = 1080
-
-    if white > (white_percentage * lower_width * lower_height):
-        # cv2.imshow("Bowlers Frame",frame1)
-    
-        # Skip frames
-        for i in range(0,SKIP):
-            (grabbed1, frame1) = camera.read()
-
-        initial_frame = frame_no + SKIP
-        frame_no = frame_no + SKIP
-        break
-
-# for i in range(0,1):
+# (grabbed1, prev) = camera.read()
+# while True:
+#     """
+#         Captures the frame in which bowler starts to bowl
+#     """
+#     # Grab a frame and take difference from prev frame
 #     (grabbed1, frame1) = camera.read()
+#     frame_no += 1
+#     if not grabbed1:
+#         print "Unable to grab frame: "+str(frame_no)
+#         break
 
-# initial_frame = 1
-# frame_no = 1
+#     gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
+#     gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+#     final1 = gray1[y_start: y_end, x_start: x_end]
+#     final2 = gray2[y_start: y_end, x_start: x_end]
+#     difference = cv2.absdiff(final1, final2)
+#     retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
+#     prev = frame1
+    
+#     # Count number of white difference pixels 
+#     white = cv2.countNonZero(threshold)
+
+#     # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
+#     # Skip above mentioned number of frames
+#     white_percentage = 0.02
+#     lower_height = 360
+#     lower_width = 1080
+
+#     if white > (white_percentage * lower_width * lower_height):
+#         # cv2.imshow("Bowlers Frame",frame1)
+    
+#         # Skip frames
+#         for i in range(0,SKIP):
+#             (grabbed1, frame1) = camera.read()
+
+#         initial_frame = frame_no + SKIP
+#         frame_no = frame_no + SKIP
+#         break
+
+# Uncomment for ball at first frame
+for i in range(0,1):
+    (grabbed1, frame1) = camera.read()
+
+initial_frame = 1
+frame_no = 1
 
 # Ball detection
 # Find coordinates of the ball for the first time
@@ -170,6 +244,11 @@ while True:
 
     # Grab frames one by one, modify it and send it to detector.py
     (grabbed1, frame1) = camera.read()
+
+    if not grabbed1:
+        print "Unable to grab frame: "+str(frame_no)
+        break
+
     gray_image_1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
     crop_img = gray_image_1[y_start: y_end, x_start: x_end]
     current_ballPos_temp = (0,0)
@@ -211,6 +290,7 @@ while True:
     (grabbed1, frame1) = camera.read()
     frame_no += 1
     if not grabbed1:
+        print "Unable to grab frame: "+str(frame_no)
         break
 
     if frame_no > initial_frame + DURATION:
@@ -228,7 +308,7 @@ while True:
     else:
         batsman_crop = frame1
 
-    cv2.imshow("batsman_crop", batsman_crop)
+    # cv2.imshow("batsman_crop", batsman_crop)
     (rects, weights) = hog.detectMultiScale(batsman_crop, winStride=(4, 4), padding=(8, 8), scale=1.05)
     # apply non-maxima suppression to the bounding boxes using a
     # fairly large overlap threshold to try to maintain overlapping
@@ -350,7 +430,7 @@ if(len(ball_detection) >= bouncing_idx + 2):
         # print "x1 " + str(current_coord[0]) + "y1 " + str(current_coord[1]) + "x2 " + str(prev_coord[0]) + "y2 " + str(prev_coord[1]) + "dist" + str(distance)
         if angle < 0:
             angle = angle* (-1)
-        if angle <= 25 or distance <= 500:
+        if angle <= 35 or distance <= 500:
             corrected.append(current_coord)  
             prev_coord = current_coord
             prev_slope = slope
@@ -377,6 +457,9 @@ for (x,y,_,_,_) in corrected:
     i = i + 1    
 
 for (x,y) in rejected:
+    cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 0, 255), thickness=2)
+print "Rejected radius: "
+for (x,y) in rejected_radius:
     cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 0, 255), thickness=2)
     
 # Show the final tracked path!!
