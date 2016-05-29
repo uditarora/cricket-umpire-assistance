@@ -55,12 +55,12 @@ bouncing_pt_idx = -1
 # Find world coordinates
 # with open('coordinates.txt') as coord_file:   # Current
 # with open('coordinates_wideright.txt') as coord_file:   # Wide right
-# with open('coordinates_171602.txt') as coord_file:   # Bouncer
-#     END_RADIUS = 4.5
-#     WICKET_RADIUS = 4
-with open('coordinates_171638.txt') as coord_file:  # LBW
+with open('coordinates_171602.txt') as coord_file:   # Bouncer
+    END_RADIUS = 4.5
+    WICKET_RADIUS = 4
+# with open('coordinates_171638.txt') as coord_file:  # LBW
 # with open('coordinates_171124.txt') as coord_file:    # Spin
-# with open('coordinates_slow2.txt') as coord_file:   # Spin
+# with open('coordinates_171514.txt') as coord_file:   # Spin
 # with open('coordinates_171619.txt') as coord_file:    # Fast ball
     for i,row in enumerate(coord_file):
         x,y,r,frame_no,is_bouncing_pt,r_new,y_new,batsman_xmid,batsman_ymid = row.split()
@@ -109,7 +109,7 @@ print "Batsman's height: "+str(BATSMAN_HEIGHT)
 coord_file.close()
 
 # Draw environment
-scene1 = display(title="Automated Cricket Umpiring - HawkEye", width=1280, height=720, range=800, background=(0.2,0.2,0.2), center=(0,30,30))
+scene1 = display(title="HawkEye View", width=1280, height=720, range=800, background=(0.2,0.2,0.2), center=(0,30,30))
 # scene1.stereo = 'redcyan'
 scene1.forward = (-1,-0.05,0.02)
 # scene1.fov = 60*3.14/180
@@ -250,7 +250,7 @@ for idx in range(num_detected_points):
     #     print "x1: {}, y1: {}, z1: {}\nx2: {}, y2: {}, z2: {}\n".format(final_coords_3d[idx-1][0], final_coords_3d[idx-1][1], final_coords_3d[idx-1][2], final_coords_3d[idx][0], final_coords_3d[idx][1], final_coords_3d[idx][2])
     #     box(pos=(final_coords_3d[idx][0],final_coords_3d[idx][1]/2,final_coords_3d[idx][2]), size=(5,final_coords_3d[idx][1],5))
 
-average_speed = average_speed/(average_length)
+average_speed = average_speed*0.9/(average_length)
 
 print "Speed of delivery: {:.3f} km/h".format(average_speed)
 
@@ -453,7 +453,11 @@ def check_noball():
     y, z = get_nearest_ball_coords(near_wicket_idx, min_diff, before_wicket_idx, near_crease=True)
 
     # If bounce point detected, return False
-    if bouncing_pt_idx == 1:
+    if bouncing_pt_idx != -1:
+        return False
+
+    # If bounce point is the last point, return False
+    if bouncing_pt_idx == num_detected_points-1:
         return False
 
     if (y >= BATSMAN_HEIGHT*0.62):
