@@ -119,6 +119,13 @@ for time,imagePath in enumerate(glob.glob(path)):
     frame = imread(imagePath,0)
     imshow("Original Image",frame)
 
+    clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(2,2))
+    cl1 = clahe.apply(frame)
+
+    cv2.imshow("CLAHE", cl1)
+
+    frame = cl1
+
     blurredFrame = GaussianBlur(frame,(5,5),0)
     # blurredFrame = cv2.blur(frame, (35,35))
     #equalizeHist(frame,blurredFrame)

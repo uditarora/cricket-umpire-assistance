@@ -18,9 +18,9 @@ FPS = 120.0
 START_RADIUS = 0.0
 END_RADIUS = 0.0
 # Manually define start and end position radii
-START_RADIUS = 16
-END_RADIUS = 5
-WICKET_RADIUS = 4.5
+START_RADIUS = 13.5
+END_RADIUS = 5.5
+WICKET_RADIUS = 5
 # END_RADIUS = 3.5
 # WICKET_RADIUS = 3.2
 
@@ -54,14 +54,14 @@ SCALE = [1, 0.5, PITCH_LENGTH - (2*CREASE_LENGTH)]
 bouncing_pt_idx = -1
 
 # Find world coordinates
-with open('coordinates.txt') as coord_file:   # Current
+# with open('coordinates.txt') as coord_file:   # Current
 # with open('coordinates_wideright.txt') as coord_file:   # Wide right
 # with open('coordinates_171602.txt') as coord_file:   # Bouncer
 #     END_RADIUS = 4.5
 #     WICKET_RADIUS = 4
 # with open('coordinates_171638.txt') as coord_file:  # LBW
 # with open('coordinates_171124.txt') as coord_file:    # Spin
-# with open('coordinates_171514.txt') as coord_file:   # Spin
+with open('coordinates_171514.txt') as coord_file:   # Spin
 # with open('coordinates_171619.txt') as coord_file:    # Fast ball
     for i,row in enumerate(coord_file):
         x,y,r,frame_no,is_bouncing_pt,r_new,y_new,batsman_xmid,batsman_ymid = row.split()
@@ -146,7 +146,7 @@ line4 = box(pos=(-PITCH_LENGTH/2+122,PITCH_THICKNESS/2,0), size=(LINE_WIDTH,5,36
 
 # Draw balls
 balls = []
-FX = 250
+FX = 350
 # Display balls with trail
 yp = ylist[0]*FY/(FY+zlist[0])
 # yp = ylist[0] - ((z-700)/5)
@@ -403,16 +403,16 @@ def check_wide():
         return True
 
     if z <= -(WIDE_WIDTH/2-LINE_WIDTH-BALL_RADIUS) or z >= (WICKET_WIDTH+BALL_RADIUS):
-        decision['wide'] = "WIDE"
         return True
     else:
-        decision['wide'] = "NOT WIDE"
         return False
 
 if check_wide():
     print "\nWIDE DECISION: WIDE"
+    decision['wide'] = "WIDE"
 else:
     print "\nWIDE DECISION: NOT WIDE"
+    decision['wide'] = "NOT WIDE"
 
 # Check Bouncer Decision
 def check_bouncer():

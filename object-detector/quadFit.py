@@ -36,6 +36,10 @@ def quadraticRegression(data):
       x1.append(x)
       y1.append(y)
 
+      x1_with_bounce.append(x)
+      y1_with_bounce.append(y)
+      w1_with_bounce.append(weights1)
+
     else:
       w2.append(weights2)
       weights2 = 1
@@ -43,7 +47,7 @@ def quadraticRegression(data):
       y2.append(y)
     i = i + 1  
 
-  # Make w2 in decreasing order except first point
+  # Make w2 vary in decreasing order except first point
   for i in range(1,len(w2)):
     if i <= len(w2)/4:
       w2[i] = 3
@@ -60,6 +64,7 @@ def quadraticRegression(data):
   # calculate polynomial before bounce
   if len(x1) > 0:
     z1 = np.polyfit(x1_with_bounce, y1_with_bounce, 2, None, False, w1_with_bounce, False)
+    # z1 = np.polyfit(x1, y1, 2, None, False, w1, False)
     f1 = np.poly1d(z1)
     
     # calculate new x's and y's

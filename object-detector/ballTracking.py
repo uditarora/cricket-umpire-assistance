@@ -57,6 +57,11 @@ def findRadius(frame, window_x, window_y, frame_no):
     # START_RADIUS = 21.8 #151
     # FINISH_RADIUS = 7.2 #223
     # PITCH_DIST = 16
+
+    # Apply CLAHE algo on frame to improve contrast
+    clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(2,2))
+    frame = clahe.apply(frame)
+
     blurredFrame = cv2.GaussianBlur(frame,(5,5),0)
     # cv2.imshow("Blurred Frame", blurredFrame)
 
@@ -78,7 +83,7 @@ def findRadius(frame, window_x, window_y, frame_no):
     returnVal = True
 
     # If ball is too bright reject it
-    if avg_color_ball > 110.0:
+    if avg_color_ball > 120.0:
         THRESHOLD_brightness = 100.0
         returnVal = False
     elif avg_color_ball > 100.0:
@@ -165,58 +170,58 @@ frame_no = 1
 initial_frame = 0
 
 # Comment for ball at first frame
-# # Rectangular Coordinates for lower half of the image
-# y_start = 360
-# y_end = 720
-# x_start = 0
-# x_end = 1080 
+# Rectangular Coordinates for lower half of the image
+y_start = 360
+y_end = 720
+x_start = 0
+x_end = 1080 
     
-# (grabbed1, prev) = camera.read()
-# while True:
-#     """
-#         Captures the frame in which bowler starts to bowl
-#     """
-#     # Grab a frame and take difference from prev frame
-#     (grabbed1, frame1) = camera.read()
-#     frame_no += 1
-#     if not grabbed1:
-#         print "Unable to grab frame: "+str(frame_no)
-#         break
+(grabbed1, prev) = camera.read()
+while True:
+    """
+        Captures the frame in which bowler starts to bowl
+    """
+    # Grab a frame and take difference from prev frame
+    (grabbed1, frame1) = camera.read()
+    frame_no += 1
+    if not grabbed1:
+        print "Unable to grab frame: "+str(frame_no)
+        break
 
-#     gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
-#     gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-#     final1 = gray1[y_start: y_end, x_start: x_end]
-#     final2 = gray2[y_start: y_end, x_start: x_end]
-#     difference = cv2.absdiff(final1, final2)
-#     retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
-#     prev = frame1
+    gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
+    gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+    final1 = gray1[y_start: y_end, x_start: x_end]
+    final2 = gray2[y_start: y_end, x_start: x_end]
+    difference = cv2.absdiff(final1, final2)
+    retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
+    prev = frame1
     
-#     # Count number of white difference pixels 
-#     white = cv2.countNonZero(threshold)
+    # Count number of white difference pixels 
+    white = cv2.countNonZero(threshold)
 
-#     # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
-#     # Skip above mentioned number of frames
-#     white_percentage = 0.02
-#     lower_height = 360
-#     lower_width = 1080
+    # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
+    # Skip above mentioned number of frames
+    white_percentage = 0.02
+    lower_height = 360
+    lower_width = 1080
 
-#     if white > (white_percentage * lower_width * lower_height):
-#         # cv2.imshow("Bowlers Frame",frame1)
+    if white > (white_percentage * lower_width * lower_height):
+        # cv2.imshow("Bowlers Frame",frame1)
     
-#         # Skip frames
-#         for i in range(0,SKIP):
-#             (grabbed1, frame1) = camera.read()
+        # Skip frames
+        for i in range(0,SKIP):
+            (grabbed1, frame1) = camera.read()
 
-#         initial_frame = frame_no + SKIP
-#         frame_no = frame_no + SKIP
-#         break
+        initial_frame = frame_no + SKIP
+        frame_no = frame_no + SKIP
+        break
 
 # Uncomment for ball at first frame
-for i in range(0,1):
-    (grabbed1, frame1) = camera.read()
+# for i in range(0,1):
+#     (grabbed1, frame1) = camera.read()
 
-initial_frame = 1
-frame_no = 1
+# initial_frame = 1
+# frame_no = 1
 
 # Ball detection
 # Find coordinates of the ball for the first time
@@ -458,7 +463,7 @@ for (x,y,_,_,_) in corrected:
 
 for (x,y) in rejected:
     cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 0, 255), thickness=2)
-print "Rejected radius: "
+
 for (x,y) in rejected_radius:
     cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 0, 255), thickness=2)
     

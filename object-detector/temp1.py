@@ -12,6 +12,11 @@ def quadraticRegression(data):
   w2 = []
   weights2 = 5
 
+  # Lists containing bounce point in the part before bounce - only used for finding polynomial
+  x1_with_bounce = []
+  y1_with_bounce = []
+  w1_with_bounce = []
+
 
   changing_point = 0
   prev_x = 0
@@ -22,11 +27,18 @@ def quadraticRegression(data):
       changing_point = 1
       if i > 0:
         w1[i-1] = 5
+      x1_with_bounce.append(x)
+      y1_with_bounce.append(y)
+      w1_with_bounce.append(10)
 
     if changing_point == 0:        
       w1.append(weights1)
       x1.append(x)
       y1.append(y)
+
+      x1_with_bounce.append(x)
+      y1_with_bounce.append(y)
+      w1_with_bounce.append(weights1)
 
     else:
       w2.append(weights2)
@@ -35,6 +47,14 @@ def quadraticRegression(data):
       y2.append(y)
     i = i + 1  
 
+  # Make w2 vary in decreasing order except first point
+  for i in range(1,len(w2)):
+    if i <= len(w2)/4:
+      w2[i] = 3
+    elif i <= len(w2)/2:
+      w2[i] = 2
+    else:
+      w2[i] = 1
 
   x_new1 = []
   y_new1 = []
@@ -43,7 +63,7 @@ def quadraticRegression(data):
 
   # calculate polynomial before bounce
   if len(x1) > 0:
-    z1 = np.polyfit(x1, y1, 1, None, False, w1, False)
+    z1 = np.polyfit(x1_with_bounce, y1_with_bounce, 1, None, False, w1_with_bounce, False)
     f1 = np.poly1d(z1)
     
     # calculate new x's and y's
