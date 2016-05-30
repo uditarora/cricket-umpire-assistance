@@ -36,5 +36,7 @@ def linearRegression(data):
   # calculate new x's and y's
   x_new1 = xi
   y_new1 = f1(x_new1)
+  # No regression
+  # y_new1 = y
 
   return y_new1

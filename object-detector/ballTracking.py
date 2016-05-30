@@ -171,57 +171,60 @@ initial_frame = 0
 
 # Comment for ball at first frame
 # Rectangular Coordinates for lower half of the image
-y_start = 360
-y_end = 720
-x_start = 0
-x_end = 1080 
-    
-(grabbed1, prev) = camera.read()
-while True:
-    """
-        Captures the frame in which bowler starts to bowl
-    """
-    # Grab a frame and take difference from prev frame
-    (grabbed1, frame1) = camera.read()
-    frame_no += 1
-    if not grabbed1:
-        print "Unable to grab frame: "+str(frame_no)
-        break
+if bowling_attack < 2:
+    # print "Spin or fast"
+    y_start = 360
+    y_end = 720
+    x_start = 0
+    x_end = 1080 
+        
+    (grabbed1, prev) = camera.read()
+    while True:
+        """
+            Captures the frame in which bowler starts to bowl
+        """
+        # Grab a frame and take difference from prev frame
+        (grabbed1, frame1) = camera.read()
+        frame_no += 1
+        if not grabbed1:
+            print "Unable to grab frame: "+str(frame_no)
+            break
 
-    gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
-    gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-    final1 = gray1[y_start: y_end, x_start: x_end]
-    final2 = gray2[y_start: y_end, x_start: x_end]
-    difference = cv2.absdiff(final1, final2)
-    retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
-    prev = frame1
-    
-    # Count number of white difference pixels 
-    white = cv2.countNonZero(threshold)
+        gray1 = cv2.cvtColor(prev, cv2.COLOR_BGR2GRAY)
+        gray2 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+        final1 = gray1[y_start: y_end, x_start: x_end]
+        final2 = gray2[y_start: y_end, x_start: x_end]
+        difference = cv2.absdiff(final1, final2)
+        retval, threshold = cv2.threshold(difference, 30, 255, cv2.THRESH_BINARY)
+        prev = frame1
+        
+        # Count number of white difference pixels 
+        white = cv2.countNonZero(threshold)
 
-    # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
-    # Skip above mentioned number of frames
-    white_percentage = 0.02
-    lower_height = 360
-    lower_width = 1080
+        # If white pixels in the lower half of the image is greater than 3%, that means it's a bowlers arm.
+        # Skip above mentioned number of frames
+        white_percentage = 0.02
+        lower_height = 360
+        lower_width = 1080
 
-    if white > (white_percentage * lower_width * lower_height):
-        # cv2.imshow("Bowlers Frame",frame1)
-    
-        # Skip frames
-        for i in range(0,SKIP):
-            (grabbed1, frame1) = camera.read()
+        if white > (white_percentage * lower_width * lower_height):
+            # cv2.imshow("Bowlers Frame",frame1)
+        
+            # Skip frames
+            for i in range(0,SKIP):
+                (grabbed1, frame1) = camera.read()
 
-        initial_frame = frame_no + SKIP
-        frame_no = frame_no + SKIP
-        break
+            initial_frame = frame_no + SKIP
+            frame_no = frame_no + SKIP
+            break
 
-# Uncomment for ball at first frame
-# for i in range(0,1):
-#     (grabbed1, frame1) = camera.read()
+if bowling_attack == 2:
+    # Uncomment for ball at first frame
+    for i in range(0,1):
+        (grabbed1, frame1) = camera.read()
 
-# initial_frame = 1
-# frame_no = 1
+    initial_frame = 1
+    frame_no = 1
 
 # Ball detection
 # Find coordinates of the ball for the first time

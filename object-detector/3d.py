@@ -11,6 +11,7 @@ bouncing_pt = []
 frames_list = []
 batsman_mid_list = []
 
+SHOW_3D = False
 SHOW_LABELS = True
 
 FPS = 120.0
@@ -57,8 +58,6 @@ bouncing_pt_idx = -1
 # with open('coordinates.txt') as coord_file:   # Current
 # with open('coordinates_wideright.txt') as coord_file:   # Wide right
 # with open('coordinates_171602.txt') as coord_file:   # Bouncer
-#     END_RADIUS = 4.5
-#     WICKET_RADIUS = 4
 # with open('coordinates_171638.txt') as coord_file:  # LBW
 # with open('coordinates_171124.txt') as coord_file:    # Spin
 with open('coordinates_171514.txt') as coord_file:   # Spin
@@ -111,7 +110,8 @@ coord_file.close()
 
 # Draw environment
 scene1 = display(title="HawkEye View", width=1280, height=720, range=800, background=(0.2,0.2,0.2), center=(0,30,30))
-# scene1.stereo = 'redcyan'
+if SHOW_3D:
+    scene1.stereo = 'redblue'
 scene1.forward = (-1,-0.05,0.02)
 # scene1.fov = 60*3.14/180
 # Draw pitch floor

@@ -17,6 +17,11 @@ def quadraticRegression(data):
   y1_with_bounce = []
   w1_with_bounce = []
 
+  # Lists containing the predicted coordinates
+  x_pred = []
+  y_pred = []
+  w_pred = []
+
 
   changing_point = 0
   prev_x = 0
@@ -69,6 +74,7 @@ def quadraticRegression(data):
     # calculate new x's and y's
     x_new1 = x1
     y_new1 = f1(x_new1)
+    # Without regression
     # y_new1 = y1
 
 
@@ -80,14 +86,17 @@ def quadraticRegression(data):
 
   # Prediction
   for i in range(1,300):
-    x2.append(prev_x + i*1)
-    w2.append(1)
-
+    x_pred.append(prev_x + i*1)
+    w_pred.append(1)
 
 
   # calculate new x's and y's
   x_new2 = x2
   y_new2 = f2(x_new2)
+  # Without regression
+  # y_new2 = y2
+
+  y_pred = f2(x_pred)
 
   y_new = []
 
@@ -96,5 +105,7 @@ def quadraticRegression(data):
     
   for i in y_new2:
     y_new.append(i)
+
+  y_new.extend(y_pred)
 
   return y_new
