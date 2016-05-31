@@ -26,6 +26,7 @@ class MainMenuScreen(Screen):
 
     slide_flag = "0"
     action_flag = "0"
+    vflag = "0"
 
     # Show filename in fname_label
     def selected(self, filename, *args):
@@ -60,6 +61,16 @@ class MainMenuScreen(Screen):
     def analyze(self, filename, *args):
         if len(filename) == 0:
             return
+        if '171638.mp4' in filename[0]:
+            self.vflag = "1"
+        elif '171258.mp4' in filename[0]:
+            self.vflag = "2"
+        elif '171901.mp4' in filename[0]:
+            self.vflag = "3"
+        elif '171602.mp4' in filename[0]:
+            self.vflag = "4"
+        elif '171200.mp4' in filename[0]:
+            self.vflag = "5"
         python_bin = "/Users/udit/.virtualenvs/cv/bin/python"
         script_path = "/Users/udit/git/btp/object-detector/ballTracking.py"
         # print "Calling: {} {} -v {} -a {} -s {}".format(python_bin, script_path, filename[0], self.action_flag, self.slide_flag)
@@ -73,7 +84,10 @@ class MainMenuScreen(Screen):
     # Run 3d.py
     def visualize(self, *args):
         script_path = "/Users/udit/git/btp/object-detector/3d.py"
-        python_bin = "/Users/udit/.virtualenvs/cv/bin/python"
+        python_bin = "python"
+        file = open("args.txt", "w")
+        file.write("{} {} -v {}".format(python_bin, script_path, self.vflag))
+        file.close()
         subprocess.call(["open", "-a", "Terminal", "./visualize.sh"])
         # subprocess.Popen([python_bin, script_path])
         # os.system("python "+script_path)

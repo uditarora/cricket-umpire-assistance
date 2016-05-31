@@ -17,7 +17,7 @@ from imutils import paths
 DEBUG_VISUALIZE = True
 
 # Coordinates file
-Coordinates_file = open("coordinates.txt", "w")
+# Coordinates_file = open("coordinates.txt", "w")
 Textlines = []
 # Warning filter
 warnings.filterwarnings("ignore")
@@ -25,14 +25,16 @@ warnings.filterwarnings("ignore")
 # Construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video", help="path to the video file", required=True)
-ap.add_argument("-a", "--attack", help="specify bowling attack - 1 for Spin bowling and 0 for Fast", default=0)
+ap.add_argument("-a", "--attack", help="specify bowling attack - 1 for Spin bowling and 0 for Fast", default=2)
 ap.add_argument("-s", "--sliding", help="Show sliding", default=0)
-ap.add_argument("-f", "--first", help="First frame", default=1)
+ap.add_argument("-f", "--first", help="First frame", default=0)
+ap.add_argument("-l", "--last", help="Last frame", default=1000)
 args = vars(ap.parse_args())
 camera = cv2.VideoCapture(args["video"])
 bowling_attack = int(args["attack"])
 show_slide = int(args["sliding"])
 arg_first_frame = int(args["first"])
+arg_last_frame = int(args["last"])
 # Number of frames to skip after initial movement detected
 SKIP = 45
 
@@ -225,17 +227,17 @@ if bowling_attack == 2:
     for i in range(0,arg_first_frame-1):
         (grabbed1, frame1) = camera.read()
 
-    initial_frame = 1
-    frame_no = 1
+    initial_frame = arg_first_frame
+    frame_no = arg_first_frame
 
 # Ball detection
 # Find coordinates of the ball for the first time
 
 # Window coordinates for focussed image
-y_start = 50
+y_start = 150
 y_end = 720
-x_start = 100
-x_end = 700 
+x_start = 150
+x_end = 900
  
 # Parameters for detector.py
 step_size = (10, 10)
@@ -306,6 +308,9 @@ while True:
     if frame_no > initial_frame + DURATION:
         break
 
+    if frame_no > arg_last_frame:
+        break
+
     # cv2.imshow("Current Grabbed Frame",frame1)
     last_frame = frame1
     gray_image_1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
@@ -313,53 +318,47 @@ while True:
     img_copy_1 = gray_image_1.copy()
 
     # detect people in the image
-    if not batsman_first_detection:
-        batsman_crop = frame1[batsman_area[1]:batsman_area[3], batsman_area[0]:batsman_area[2]]
-    else:
-        batsman_crop = frame1
+    # if not batsman_first_detection:
+    #     batsman_crop = frame1[batsman_area[1]:batsman_area[3], batsman_area[0]:batsman_area[2]]
+    # else:
+    #     batsman_crop = frame1
 
-    # cv2.imshow("batsman_crop", batsman_crop)
-    (rects, weights) = hog.detectMultiScale(batsman_crop, winStride=(4, 4), padding=(8, 8), scale=1.05)
-    # apply non-maxima suppression to the bounding boxes using a
-    # fairly large overlap threshold to try to maintain overlapping
-    # boxes that are still people
-    rects = np.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
+    # # cv2.imshow("batsman_crop", batsman_crop)
+    # (rects, weights) = hog.detectMultiScale(batsman_crop, winStride=(4, 4), padding=(8, 8), scale=1.05)
+    # # apply non-maxima suppression to the bounding boxes using a
+    # # fairly large overlap threshold to try to maintain overlapping
+    # # boxes that are still people
+    # rects = np.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
 
-    if len(rects) > 0:
-        pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
-        xmid = 0
-        ymid = 0
-        max_rect = ()
-        for (x1, y1, x2, y2) in pick:
-            if (x1+x2)/2 > xmid:
-                xmid = (x1+x2)/2
-                ymid = (y1+y2)/2
-                max_rect = (x1, y1, x2, y2)
+    # if len(rects) > 0:
+    #     pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
+    #     xmid = 0
+    #     ymid = 0
+    #     max_rect = ()
+    #     for (x1, y1, x2, y2) in pick:
+    #         if (x1+x2)/2 > xmid:
+    #             xmid = (x1+x2)/2
+    #             ymid = (y1+y2)/2
+    #             max_rect = (x1, y1, x2, y2)
 
-        # Batsman search in full frame
-        if batsman_first_detection:
-            cv2.rectangle(img_copy_1, (max_rect[0], max_rect[1]), (max_rect[2], max_rect[3]), (0, 255, 0), 2)
-            batsman_mid[frame_no] = (xmid,ymid)
-        # Batsman search in cropped frame
-        else:
-            cv2.rectangle(img_copy_1, (max_rect[0]+batsman_area[0], max_rect[1]+batsman_area[1]), (max_rect[2]+batsman_area[0], max_rect[3]+batsman_area[1]), (0, 255, 0), 2)
-            batsman_mid[frame_no] = (xmid+batsman_area[0],ymid+batsman_area[1])
+    #     # Batsman search in full frame
+    #     if batsman_first_detection:
+    #         cv2.rectangle(img_copy_1, (max_rect[0], max_rect[1]), (max_rect[2], max_rect[3]), (0, 255, 0), 2)
+    #         batsman_mid[frame_no] = (xmid,ymid)
+    #     # Batsman search in cropped frame
+    #     else:
+    #         cv2.rectangle(img_copy_1, (max_rect[0]+batsman_area[0], max_rect[1]+batsman_area[1]), (max_rect[2]+batsman_area[0], max_rect[3]+batsman_area[1]), (0, 255, 0), 2)
+    #         batsman_mid[frame_no] = (xmid+batsman_area[0],ymid+batsman_area[1])
 
-        # Set batsman crop area after first detection
-        if batsman_first_detection:
-            batsman_first_detection = False
-            batsman_area = (max_rect[0]-100, 100, max_rect[2]+100, max_rect[3]+100)
+    #     # Set batsman crop area after first detection
+    #     if batsman_first_detection:
+    #         batsman_first_detection = False
+    #         batsman_area = (max_rect[0]-100, 100, max_rect[2]+100, max_rect[3]+100)
     
     # New window coordinates for searching
-    # if frame_no < initial_frame + 5:
-    #     x1 = current_ballPos[0] - 50        
-    #     x2 = current_ballPos[0] + 150
-    #     y1 = current_ballPos[1] - 150
-    #     y2 = current_ballPos[1] + 150
-    # else:
-    x1 = current_ballPos[0] - 50
-    x2 = current_ballPos[0] + 100
-    y1 = current_ballPos[1] - 50
+    x1 = current_ballPos[0] - 50        
+    x2 = current_ballPos[0] + 200
+    y1 = current_ballPos[1] - 150
     y2 = current_ballPos[1] + 100
 
     # Checks for out of bound
@@ -374,7 +373,10 @@ while True:
 
     # Crops the searching area 
     crop_img = gray_image_1[y1: y2, x1: x2]
-    
+    # crop_img = gray_image_1
+
+
+    print "Analyzing frame: "+str(frame_no)
     # Image sent to detector.py to get ball coordinates
     current_ballPos_temp = detector.find(crop_img, step_size,threshold,img_copy_1,x1,y1,x2,y2,show_slide)
     
@@ -425,6 +427,8 @@ corrected = []
 rejected = []
 for i in range(0,bouncing_idx + 2):
     # print i
+    if i >= len(ball_detection) or i >= len(Textlines):
+        break
     corrected.append((ball_detection[i][0] + 25, ball_detection[i][1] + 25,Textlines[i][2], Textlines[i][3], Textlines[i][4]))
 
 if(len(ball_detection) >= bouncing_idx + 2):
@@ -432,6 +436,8 @@ if(len(ball_detection) >= bouncing_idx + 2):
     # print prev_coord
     prev_slope = (prev_coord[1] - (ball_detection[bouncing_idx][1]+ 25) )/(prev_coord[0] - (25+ball_detection[bouncing_idx][0])) 
     for i in range((bouncing_idx+2), len(ball_detection)):
+        if i >= len(ball_detection) or i >= len(Textlines):
+            break
         current_coord = (ball_detection[i][0]+25,ball_detection[i][1]+25,Textlines[i][2], Textlines[i][3], Textlines[i][4])
         # print current_coord
         if (current_coord[0] - prev_coord[0]) == 0:
@@ -468,15 +474,15 @@ if(len(ball_detection) >= bouncing_idx + 2):
         
 i = 0
 for (x,y,_,_,_) in corrected:
-    if i > bouncing_idx:
-        cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 255, 0), thickness=2)
+    # if i > bouncing_idx:
+    cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 255, 0), thickness=2)
     i = i + 1    
 
 for (x,y) in rejected:
     cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 0, 255), thickness=2)
 
 for (x,y) in rejected_radius:
-    cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 0, 255), thickness=2)
+    cv2.rectangle(last_frame, (x-2, y-2), (x+2, y+2), (0, 255, 0), thickness=2)
     
 # Show the final tracked path!!
 if DEBUG_VISUALIZE:
@@ -486,19 +492,20 @@ if DEBUG_VISUALIZE:
 
 
 # Regressions
-linearReg = linReg.linearRegression(corrected)
-quadraticReg = quadFit.quadraticRegression(corrected)
+# linearReg = linReg.linearRegression(corrected)
+# quadraticReg = quadFit.quadraticRegression(corrected)
 
 # Qutput to text file in the format: [x y radius frame_no is_bouncing_point regressed_radius regressed_y batsman_mid_x batsman_mid_y]
-idx = 0
-for (x,y,radius,frame_no,is_bouncing_point) in corrected:
-    if frame_no not in batsman_mid:
-        batsman_mid[frame_no] = (-1,-1)
-    Coordinates_file.write("{:.3f} {:.3f} {:.3f} {} {} {:.3f} {:.3f} {} {}\n".format(x, y, radius, frame_no, is_bouncing_point, linearReg[idx], quadraticReg[idx], batsman_mid[frame_no][0], batsman_mid[frame_no][1]))
-    idx = idx + 1
+# idx = 0
+# for (x,y,radius,frame_no,is_bouncing_point) in corrected:
+#     if frame_no not in batsman_mid:
+#         batsman_mid[frame_no][0] = -1
+#         batsman_mid[frame_no][1] = -1
+#     Coordinates_file.write("{:.3f} {:.3f} {:.3f} {} {} {:.3f} {:.3f} {} {}\n".format(x, y, radius, frame_no, is_bouncing_point, linearReg[idx], quadraticReg[idx], batsman_mid[frame_no][0], batsman_mid[frame_no][1]))
+#     idx = idx + 1
 
 # Close coordinates text file
-Coordinates_file.close()
+# Coordinates_file.close()
 
 # Close any open windows
 cv2.destroyAllWindows()

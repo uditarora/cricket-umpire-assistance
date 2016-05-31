@@ -1,4 +1,5 @@
 from visual import *
+import argparse
 import quadFit
 import temp1
 from PIL import Image
@@ -13,6 +14,7 @@ batsman_mid_list = []
 
 SHOW_3D = False
 SHOW_LABELS = True
+AFTER_BOUNCE_LINEAR = False
 
 FPS = 120.0
 
@@ -55,12 +57,13 @@ SCALE = [1, 0.5, PITCH_LENGTH - (2*CREASE_LENGTH)]
 bouncing_pt_idx = -1
 
 # Find world coordinates
-# with open('coordinates.txt') as coord_file:   # Current
-# with open('coordinates_wideright.txt') as coord_file:   # Wide right
+with open('coordinates.txt') as coord_file:   # Current
+# with open('coordinates_171200.txt') as coord_file:   # Current
+# with open('coordinates_172050.txt') as coord_file:   # LBW
 # with open('coordinates_171602.txt') as coord_file:   # Bouncer
 # with open('coordinates_171638.txt') as coord_file:  # LBW
 # with open('coordinates_171124.txt') as coord_file:    # Spin
-with open('coordinates_171514.txt') as coord_file:   # Spin
+# with open('coordinates_171514.txt') as coord_file:   # Spin
 # with open('coordinates_171619.txt') as coord_file:    # Fast ball
     for i,row in enumerate(coord_file):
         x,y,r,frame_no,is_bouncing_pt,r_new,y_new,batsman_xmid,batsman_ymid = row.split()
@@ -81,8 +84,28 @@ with open('coordinates_171514.txt') as coord_file:   # Spin
 
         batsman_mid_list.append((float(batsman_xmid), float(batsman_ymid)))
 
+ap = argparse.ArgumentParser()
+ap.add_argument("-v", "--video", help="path to the video file", default=0)
+args = vars(ap.parse_args())
+flag = int(args["video"])
+if flag == 1:
+    END_RADIUS = 5.2
+    WICKET_RADIUS = 4.8
+elif flag == 2:
+    END_RADIUS = 6.5
+    WICKET_RADIUS = 6
+elif flag == 3:
+    END_RADIUS = 4.5
+    WICKET_RADIUS = 4
+elif flag == 4:
+    END_RADIUS = 5.8
+    WICKET_RADIUS = 5.3
+elif flag == 5:
+    END_RADIUS = 6.4
+    WICKET_RADIUS = 5.8
+
 for i,radius in enumerate(rlist):   
-    z = (START_RADIUS-radius)/(START_RADIUS-END_RADIUS)
+    z = abs((START_RADIUS-radius)/(START_RADIUS-END_RADIUS))
     zlist.append(z*SCALE[2])
 
 def getBatsmanHeight():
@@ -100,7 +123,7 @@ def getBatsmanHeight():
     height = yavg*FY/(FY + (PITCH_LENGTH/2-122))
     # print "Yavg after perspective: "+str(height)
 
-    return height*2*0.75
+    return height*2*0.73
 
 BATSMAN_HEIGHT = getBatsmanHeight()
 print "Batsman's height: "+str(BATSMAN_HEIGHT)
@@ -183,7 +206,7 @@ for i in range(len(xlist)):
     #   zp = xlist[i]  
     # zp = xlist[i]
 
-quadraticReg = quadFit.quadraticRegression(coords_3d)
+quadraticReg = quadFit.quadraticRegression(coords_3d, after_bounce_linear = AFTER_BOUNCE_LINEAR)
 linearReg = temp1.quadraticRegression(coords_3d)
 
 # Append predicted points to coords_3d list
@@ -216,7 +239,7 @@ STEP_SIZE = 20
 for idx in range(num_detected_points, len(coords_3d),20):
     # rate(2)
     # Draw predicted ball at position, skipping 20 positions
-    if coords_3d[idx][0] > -400:
+    if coords_3d[idx][0] <= PITCH_LENGTH*1.2/2:
         balls.append(sphere(pos=(coords_3d[idx][0],quadraticReg[idx], linearReg[idx]), radius=BALL_RADIUS, color=color.blue, opacity=0.8))
         # balls.append(sphere(pos=(coords_3d[idx][0],quadraticReg[idx], coords_3d[idx][2]), radius=6, color=color.blue))
         # Draw cylindrical trajectory
@@ -240,7 +263,7 @@ for idx in range(num_detected_points):
         time = float(frames_list[idx]-frames_list[idx-1])/FPS
         speed = (mag(displacement)/time)*3.6/100
         speed_list.append(speed)
-        if idx <= bouncing_pt_idx or bouncing_pt_idx == 0:
+        if idx >= bouncing_pt_idx or bouncing_pt_idx == 0:
             average_speed += speed
             average_length += 1
 
@@ -359,6 +382,7 @@ def check_lbw():
     # Bounce out of impact zone
     else:
         decision['pitching'] = "OUTSIDE LEG"
+        decision['impact'] = "OUTSIDE"
         print "PITCHING: OUTSIDE LEG"
         return False
 
@@ -378,12 +402,12 @@ if check_lbw():
     decision['lbw'] = "OUT"
     decision['wickets'] = "HITTING"
     print "WICKETS: HITTING"
-    print "\nLBW DECISION: OUT"
+    # print "\nLBW DECISION: OUT"
 else:
     decision['lbw'] = "NOT OUT"
     decision['wickets'] = "NOT HITTING"
     print "WICKETS: NOT HITTING"
-    print "\nLBW DECISION: NOT OUT"
+    # print "\nLBW DECISION: NOT OUT"
 
 # Check Wide Decision
 def check_wide():
@@ -506,17 +530,17 @@ TEXT_FONT = 'sans'
 
 # Draw Decision Labels on screen
 if SHOW_LABELS:
-    display1 = label(pos=(-PITCH_LENGTH*1.5/2,700,-1000), text=decision['lbwheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-    display2 = label(pos=(-PITCH_LENGTH*1.5/2,600,-1000), text=decision['lbw'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    # display1 = label(pos=(-PITCH_LENGTH*1.5/2,700,-1000), text=decision['lbwheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    # display2 = label(pos=(-PITCH_LENGTH*1.5/2,600,-1000), text=decision['lbw'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-    display3 = label(pos=(-PITCH_LENGTH*1.5/2,450,-1000), text=decision['wicketsheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-    display4 = label(pos=(-PITCH_LENGTH*1.5/2,350,-1000), text=decision['wickets'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display3 = label(pos=(-PITCH_LENGTH*1.5/2,700,-1000), text=decision['wicketsheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display4 = label(pos=(-PITCH_LENGTH*1.5/2,600,-1000), text=decision['wickets'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-    display5 = label(pos=(-PITCH_LENGTH*1.5/2,200,-1000), text=decision['impactheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-    display6 = label(pos=(-PITCH_LENGTH*1.5/2,100,-1000), text=decision['impact'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display5 = label(pos=(-PITCH_LENGTH*1.5/2,450,-1000), text=decision['impactheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display6 = label(pos=(-PITCH_LENGTH*1.5/2,350,-1000), text=decision['impact'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
-    display7 = label(pos=(-PITCH_LENGTH*1.5/2,-50,-1000), text=decision['pitchingheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
-    display8 = label(pos=(-PITCH_LENGTH*1.5/2,-150,-1000), text=decision['pitching'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display7 = label(pos=(-PITCH_LENGTH*1.5/2,200,-1000), text=decision['pitchingheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
+    display8 = label(pos=(-PITCH_LENGTH*1.5/2,100,-1000), text=decision['pitching'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
 
     display9 = label(pos=(-PITCH_LENGTH*1.5/2,700,1000), text=decision['wideheading'], background=color.blue, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)
     display10 = label(pos=(-PITCH_LENGTH*1.5/2,600,1000), text=decision['wide'], background=color.red, opacity=0.4, box=False, height=TEXT_SIZE, font=TEXT_FONT)

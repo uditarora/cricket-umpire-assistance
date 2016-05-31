@@ -1,7 +1,7 @@
 # Scientific libraries
 import numpy as np
 
-def quadraticRegression(data):
+def quadraticRegression(data, after_bounce_linear = False):
   x1 = []
   y1 = []
   w1 = []
@@ -81,7 +81,10 @@ def quadraticRegression(data):
 
   # calculate polynomial after bounce
   if len(x2) > 0:
-    z2 = np.polyfit(x2, y2, 2, None, False, w2, False)
+    if after_bounce_linear:
+      z2 = np.polyfit(x2, y2, 1, None, False, w2, False)
+    else:
+      z2 = np.polyfit(x2, y2, 2, None, False, w2, False)
     f2 = np.poly1d(z2)
     
     for i in range(1,300):
